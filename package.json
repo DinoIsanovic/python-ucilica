@@ -1,0 +1,86 @@
+{
+  "name": "python-ucilica",
+  "productName": "Python Učilica",
+  "version": "1.0.0",
+  "description": "Interaktivne Python vježbe za početnike",
+  "main": "src/main.js",
+  "scripts": {
+    "start":   "electron-forge start",
+    "package": "electron-forge package",
+    "make":    "electron-forge make",
+    "publish": "electron-forge publish"
+  },
+  "config": {
+    "forge": {
+      "packagerConfig": {
+        "name":           "Python Učilica",
+        "executableName": "python-ucilica",
+        "icon":           "assets/icon",
+        "appVersion":     "1.0.0",
+        "asar": {
+          "unpack": "src/pyodide/**"
+        },
+        "extraResource": [],
+        "win32metadata": {
+          "CompanyName":      "Python Učilica",
+          "FileDescription":  "Interaktivne Python vježbe",
+          "OriginalFilename": "python-ucilica.exe"
+        }
+      },
+      "publishers": [
+        {
+          "name": "@electron-forge/publisher-github",
+          "config": {
+            "repository": {
+              "owner": "DinoIsanovic",
+              "name":  "python-ucilica"
+            },
+            "prerelease": false,
+            "draft":      true
+          }
+        }
+      ],
+      "makers": [
+        {
+          "name": "@electron-forge/maker-squirrel",
+          "platforms": ["win32"],
+          "config": {
+            "name":           "python_ucilica",
+            "setupExe":       "PythonUcilica-Setup.exe",
+            "setupIcon":      "assets/icon.ico",
+            "loadingGif":     "assets/loading.gif"
+          }
+        },
+        {
+          "name": "@reforged/maker-appimage",
+          "platforms": ["linux"],
+          "config": {
+            "options": {
+              "name":        "python-ucilica",
+              "productName": "Python Učilica",
+              "genericName": "Python edukacija",
+              "categories":  ["Education", "Development"],
+              "icon":        "assets/icon.png",
+              "mimeType":    []
+            }
+          }
+        },
+        {
+          "name": "@electron-forge/maker-zip",
+          "platforms": ["darwin"]
+        }
+      ]
+    }
+  },
+  "dependencies": {
+    "electron-updater": "^6.3.9"
+  },
+  "devDependencies": {
+    "@electron-forge/cli":              "^7.4.0",
+    "@electron-forge/maker-squirrel":   "^7.4.0",
+    "@electron-forge/maker-zip":        "^7.4.0",
+    "@electron-forge/publisher-github": "^7.4.0",
+    "@reforged/maker-appimage":         "^5.2.0",
+    "electron":                         "^31.0.0"
+  }
+}

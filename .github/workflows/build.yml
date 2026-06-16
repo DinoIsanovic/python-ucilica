@@ -1,0 +1,116 @@
+name: Build i Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'   # Pokreće se na tagove: v1.0.1, v1.2.0 itd.
+  workflow_dispatch:  # Ručno pokretanje iz GitHub UI
+
+permissions:
+  contents: write   # Potrebno za kreiranje Releasea
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            platform: linux
+            artifact: "*.AppImage"
+          - os: windows-latest
+            platform: win32
+            artifact: "*.exe"
+
+    runs-on: ${{ matrix.os }}
+    name: Build (${{ matrix.platform }})
+
+    steps:
+      - name: Checkout koda
+        uses: actions/checkout@v4
+
+      - name: Postavi Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      # Linux — potrebne biblioteke za Electron + AppImage
+      - name: Linux zavisnosti
+        if: matrix.platform == 'linux'
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y \
+            libgtk-3-dev \
+            libnotify-dev \
+            libnss3 \
+            libxss1 \
+            libxtst6 \
+            xvfb \
+            fuse \
+            libfuse2
+
+      - name: npm install
+        run: npm ci
+
+      - name: Build (${{ matrix.platform }})
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npm run make -- --platform=${{ matrix.platform }}
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: python-ucilica-${{ matrix.platform }}
+          path: |
+            out/make/**/${{ matrix.artifact }}
+          retention-days: 7
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    name: Kreiraj GitHub Release
+    if: startsWith(github.ref, 'refs/tags/')
+
+    steps:
+      - name: Preuzmi Linux build
+        uses: actions/download-artifact@v4
+        with:
+          name: python-ucilica-linux
+          path: dist/linux
+
+      - name: Preuzmi Windows build
+        uses: actions/download-artifact@v4
+        with:
+          name: python-ucilica-win32
+          path: dist/windows
+
+      - name: Kreiraj Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: "Python Učilica ${{ github.ref_name }}"
+          body: |
+            ## 🐍 Python Učilica ${{ github.ref_name }}
+
+            ### Preuzimanje
+
+            | Platforma | Fajl | Napomena |
+            |-----------|------|----------|
+            | 🐧 Linux  | `Python-Ucilica-*.AppImage` | Sve distribucije, bez instalacije |
+            | 🪟 Windows | `PythonUcilica-Setup.exe` | Standardni Windows instaler |
+
+            ### Linux upute
+            ```bash
+            chmod +x Python-Ucilica-*.AppImage
+            ./Python-Ucilica-*.AppImage
+            ```
+
+            ### Šta je novo
+            _Urediti ručno na GitHub-u_
+          draft: true
+          files: |
+            dist/linux/**/*.AppImage
+            dist/windows/**/*.exe
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

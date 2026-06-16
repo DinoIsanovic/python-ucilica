@@ -1,0 +1,1810 @@
+<!DOCTYPE html>
+<html lang="bs">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob: https://fonts.googleapis.com https://fonts.gstatic.com; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob:; worker-src blob:;">
+<title>Python Učilica</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0F1117;--surface:#1A1D27;--card:#20232F;--border:#2E3347;
+  --accent:#00D2FF;--accent2:#7B61FF;--green:#00E676;--red:#FF5370;
+  --orange:#FFB300;--text:#E8EAF0;--muted:#7A7F99;--code:#141620;
+  --font:'Inter',sans-serif;--mono:'JetBrains Mono',monospace;
+}
+body{background:var(--bg);color:var(--text);font-family:var(--font);height:100vh;display:flex;flex-direction:column;overflow:hidden}
+
+/* ── Loading ── */
+#loading{position:fixed;inset:0;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;z-index:9999;transition:opacity .5s}
+#loading.hide{opacity:0;pointer-events:none}
+.load-snake{font-size:3.5rem;animation:bounce 1s infinite}
+@keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+.load-title{font-size:1.1rem;font-weight:700;color:var(--accent)}
+.load-sub{font-size:.82rem;color:var(--muted)}
+.load-bar-wrap{width:220px;height:4px;background:var(--border);border-radius:2px;overflow:hidden}
+.load-bar{height:100%;background:linear-gradient(90deg,#00D2FF,#7B61FF);width:0;transition:width .4s}
+
+/* ── Onboarding ── */
+#onboarding{position:fixed;inset:0;background:rgba(0,0,0,.8);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;z-index:8000;display:none}
+#onboarding.show{display:flex}
+.onboard-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:36px;width:420px;text-align:center}
+.onboard-card h2{font-size:1.5rem;margin-bottom:8px;color:var(--accent)}
+.onboard-card p{color:var(--muted);font-size:.9rem;margin-bottom:24px;line-height:1.6}
+.onboard-input{width:100%;padding:12px 16px;background:var(--code);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:var(--font);font-size:1rem;outline:none;margin-bottom:12px;transition:border-color .2s}
+.onboard-input:focus{border-color:var(--accent)}
+.onboard-btn{width:100%;padding:12px;background:linear-gradient(135deg,#00D2FF,#7B61FF);border:none;border-radius:8px;color:#fff;font-family:var(--font);font-size:.95rem;font-weight:700;cursor:pointer}
+.profile-row{display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--surface);border:1px solid var(--border);border-radius:10px;margin-bottom:8px;cursor:pointer;transition:all .15s;text-align:left}
+.profile-row:hover{border-color:var(--accent)}
+.profile-row .avatar{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-size:.85rem;font-weight:700;color:#000;flex-shrink:0}
+.profile-row .pinfo{flex:1;text-align:left}
+.profile-row .pname{font-weight:600;font-size:.92rem}
+.profile-row .pmeta{font-size:.72rem;color:var(--muted);margin-top:2px}
+.profile-row .ppts{font-size:.8rem;color:var(--orange);font-weight:700}
+
+/* ── Header ── */
+header{background:var(--surface);border-bottom:1px solid var(--border);padding:10px 20px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;z-index:10}
+.logo{display:flex;align-items:center;gap:8px;font-size:1rem;font-weight:700}
+.logo .accent{color:var(--accent)}
+.header-center{display:flex;align-items:center;gap:16px}
+.student-chip{display:flex;align-items:center;gap:6px;padding:4px 12px;background:var(--card);border:1px solid var(--border);border-radius:20px;font-size:.8rem;color:var(--text);font-family:var(--font);cursor:pointer;transition:border-color .15s}
+.student-chip:hover{border-color:var(--accent)}
+.student-chip .avatar{width:22px;height:22px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-size:.65rem;font-weight:700;color:#000}
+.progress-chip{display:flex;align-items:center;gap:8px;padding:4px 12px;background:var(--card);border:1px solid var(--border);border-radius:20px;font-size:.8rem}
+.progress-bar-mini{width:80px;height:4px;background:var(--border);border-radius:2px;overflow:hidden}
+.progress-bar-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));border-radius:2px;transition:width .5s}
+.header-right{display:flex;align-items:center;gap:8px}
+.hdr-btn{padding:5px 12px;border:1px solid var(--border);background:transparent;color:var(--muted);border-radius:6px;font-family:var(--font);font-size:.78rem;cursor:pointer;transition:all .15s}
+.hdr-btn:hover{border-color:var(--muted);color:var(--text)}
+.status-dot{width:7px;height:7px;border-radius:50%;background:var(--muted);transition:background .3s;flex-shrink:0}
+.status-dot.ready{background:var(--green)}
+.status-dot.loading{background:var(--orange);animation:pulse 1s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+/* ── Layout ── */
+.app{display:grid;grid-template-columns:252px 1fr;flex:1;overflow:hidden;min-height:0}
+
+/* ── Sidebar ── */
+.sidebar{background:var(--surface);border-right:1px solid var(--border);overflow-y:auto;display:flex;flex-direction:column}
+.sb-section{padding:14px 12px 6px;font-size:.66rem;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;color:var(--muted)}
+.sb-stats{padding:10px 14px;margin:8px;background:var(--card);border:1px solid var(--border);border-radius:8px;font-size:.78rem}
+.sb-stats-row{display:flex;justify-content:space-between;margin-bottom:4px;color:var(--muted)}
+.sb-stats-row span:last-child{color:var(--text);font-weight:600}
+.lesson-btn{display:flex;align-items:center;gap:8px;padding:8px 12px;cursor:pointer;border-radius:8px;margin:2px 6px;transition:all .15s;border:none;background:transparent;color:var(--text);font-family:var(--font);font-size:.84rem;text-align:left;width:calc(100% - 12px)}
+.lesson-btn:hover{background:var(--card)}
+.lesson-btn.active{background:linear-gradient(135deg,rgba(0,210,255,.12),rgba(123,97,255,.08));border:1px solid rgba(0,210,255,.25);color:var(--accent)}
+.lb-icon{width:26px;height:26px;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:.8rem;background:var(--border);flex-shrink:0}
+.lesson-btn.active .lb-icon{background:rgba(0,210,255,.18)}
+.lb-info{flex:1;min-width:0}
+.lb-title{font-weight:600;font-size:.82rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lb-sub{font-size:.69rem;color:var(--muted);margin-top:1px}
+.lesson-btn.active .lb-sub{color:rgba(0,210,255,.6)}
+.lb-badge{width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.58rem;font-weight:700;flex-shrink:0;opacity:0;transition:opacity .3s}
+.lb-badge.solved{background:var(--green);color:#000;opacity:1}
+.lb-badge.attempted{background:var(--orange);color:#000;opacity:1}
+
+/* ── Main ── */
+.main{display:flex;flex-direction:column;overflow:hidden;min-height:0}
+.task-header{padding:16px 24px 12px;border-bottom:1px solid var(--border);background:var(--card);flex-shrink:0}
+.type-badge{display:inline-flex;align-items:center;gap:5px;padding:2px 9px;border-radius:20px;font-size:.69rem;font-weight:700;text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px}
+.type-A{background:rgba(0,210,255,.12);color:var(--accent);border:1px solid rgba(0,210,255,.25)}
+.type-B{background:rgba(255,83,112,.12);color:var(--red);border:1px solid rgba(255,83,112,.25)}
+.type-C{background:rgba(0,230,118,.12);color:var(--green);border:1px solid rgba(0,230,118,.25)}
+.task-title{font-size:1.05rem;font-weight:700;margin-bottom:5px;line-height:1.3}
+.task-desc{font-size:.85rem;color:var(--muted);line-height:1.6}
+.task-desc strong{color:var(--text)}
+.task-desc code{font-family:var(--mono);font-size:.82rem;background:var(--border);padding:1px 5px;border-radius:3px;color:var(--orange)}
+.task-nav{display:flex;align-items:center;gap:7px;margin-top:10px}
+.nav-btn{padding:5px 12px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--muted);font-family:var(--font);font-size:.8rem;cursor:pointer;transition:all .15s}
+.nav-btn:hover:not(:disabled){border-color:var(--accent);color:var(--accent)}
+.nav-btn:disabled{opacity:.3;cursor:not-allowed}
+.task-counter{font-size:.78rem;color:var(--muted);margin-left:auto}
+
+/* ── Task stats mini ── */
+.task-meta{display:flex;align-items:center;gap:10px;margin-top:6px;flex-wrap:wrap}
+.meta-chip{font-size:.7rem;color:var(--muted);padding:2px 7px;background:var(--border);border-radius:10px}
+.meta-chip.green{color:var(--green);background:rgba(0,230,118,.1)}
+.meta-chip.orange{color:var(--orange);background:rgba(255,179,0,.1)}
+
+/* ── Workspace ── */
+.workspace{display:flex;flex-direction:column;flex:1;overflow:hidden;min-height:0}
+.editor-area{display:grid;grid-template-columns:1fr 1fr;flex:1;overflow:hidden;min-height:0}
+.editor-pane,.output-pane{display:flex;flex-direction:column;overflow:hidden;min-height:0}
+.editor-pane{border-right:1px solid var(--border)}
+.pane-hdr{display:flex;align-items:center;justify-content:space-between;padding:6px 14px;background:var(--surface);border-bottom:1px solid var(--border);font-size:.72rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;flex-shrink:0}
+.pane-dots{display:flex;gap:4px}
+.pane-dots span{width:9px;height:9px;border-radius:50%}
+.pane-dots span:nth-child(1){background:#FF5F57}
+.pane-dots span:nth-child(2){background:#FFBD2E}
+.pane-dots span:nth-child(3){background:#28C840}
+#editor{flex:1;background:var(--code);color:#CDD6F4;font-family:var(--mono);font-size:.9rem;line-height:1.7;padding:16px;border:none;outline:none;resize:none;tab-size:4;overflow:auto}
+#editor::placeholder{color:var(--muted)}
+.output-pane{background:var(--code)}
+#output{flex:1;padding:16px;font-family:var(--mono);font-size:.85rem;line-height:1.7;overflow-y:auto;white-space:pre-wrap;word-break:break-word;min-height:0}
+.out-placeholder{color:var(--muted);font-style:italic;font-family:var(--font)}
+.out-normal{color:#CDD6F4}
+.out-input{color:var(--orange)}
+.out-error{color:var(--red);white-space:pre-wrap}
+.out-success{color:var(--green);font-family:var(--font);font-size:.8rem;margin-top:6px;padding-top:6px;border-top:1px solid var(--border)}
+
+/* ── Panels ── */
+.hint-panel,.solution-panel{padding:10px 20px;display:none;animation:slideDown .2s ease;flex-shrink:0}
+.hint-panel.show,.solution-panel.show{display:block}
+.hint-panel{background:rgba(255,179,0,.06);border-top:1px solid rgba(255,179,0,.2);font-size:.83rem;color:var(--orange)}
+.hint-panel strong{display:block;font-size:.7rem;text-transform:uppercase;letter-spacing:.6px;margin-bottom:3px}
+.solution-panel{background:rgba(0,230,118,.05);border-top:1px solid rgba(0,230,118,.2)}
+.solution-panel strong{display:block;font-size:.7rem;text-transform:uppercase;letter-spacing:.6px;color:var(--green);margin-bottom:6px}
+.solution-panel pre{font-family:var(--mono);font-size:.8rem;color:#A6E3A1;background:rgba(0,0,0,.25);padding:10px 12px;border-radius:6px;overflow-x:auto;white-space:pre-wrap}
+@keyframes slideDown{from{opacity:0;transform:translateY(-5px)}to{opacity:1;transform:translateY(0)}}
+
+/* ── Toolbar ── */
+.toolbar{display:flex;align-items:center;gap:8px;padding:10px 16px;background:var(--surface);border-top:1px solid var(--border);flex-shrink:0}
+.run-btn{display:flex;align-items:center;gap:7px;padding:8px 20px;background:linear-gradient(135deg,#00D2FF,#7B61FF);color:#fff;border:none;border-radius:8px;font-family:var(--font);font-size:.88rem;font-weight:700;cursor:pointer;transition:opacity .2s,transform .1s;box-shadow:0 3px 12px rgba(0,210,255,.2)}
+.run-btn:hover{opacity:.9}
+.run-btn:active{transform:scale(.97)}
+.run-btn:disabled{opacity:.4;cursor:not-allowed}
+.run-btn svg{width:14px;height:14px}
+.tb-btn{padding:8px 14px;background:transparent;border:1px solid var(--border);color:var(--muted);border-radius:8px;font-family:var(--font);font-size:.82rem;cursor:pointer;transition:all .15s}
+.tb-btn:hover{border-color:var(--muted);color:var(--text)}
+.tb-btn.hint{border-color:rgba(255,179,0,.3);color:var(--orange)}
+.tb-btn.hint:hover{background:rgba(255,179,0,.08)}
+.tb-btn.sol{border-color:rgba(0,230,118,.3);color:var(--green);margin-left:auto}
+.tb-btn.sol:hover{background:rgba(0,230,118,.08)}
+#run-time{font-size:.7rem;color:var(--muted);font-family:var(--mono)}
+
+/* ── Input modal ── */
+.modal-wrap{position:fixed;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;z-index:1000}
+.modal-wrap.show{display:flex}
+.modal{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:26px;min-width:340px;max-width:460px;box-shadow:0 20px 60px rgba(0,0,0,.5)}
+.modal-prompt{font-family:var(--mono);font-size:.9rem;color:var(--orange);margin-bottom:14px;padding:9px 12px;background:var(--code);border-radius:7px;border-left:3px solid var(--orange)}
+.modal-in{width:100%;padding:11px 14px;background:var(--code);border:1px solid var(--border);border-radius:7px;color:var(--text);font-family:var(--mono);font-size:.95rem;outline:none;transition:border-color .2s;margin-bottom:12px}
+.modal-in:focus{border-color:var(--accent)}
+.modal-ok{width:100%;padding:10px;background:linear-gradient(135deg,#00D2FF,#7B61FF);border:none;border-radius:7px;color:#fff;font-family:var(--font);font-size:.88rem;font-weight:700;cursor:pointer}
+.modal-note{font-size:.74rem;color:var(--muted);text-align:center;margin-top:8px}
+
+/* ── Stats modal ── */
+.stats-wrap{position:fixed;inset:0;background:rgba(0,0,0,.75);backdrop-filter:blur(6px);display:none;align-items:center;justify-content:center;z-index:2000}
+.stats-wrap.show{display:flex}
+.stats-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:0;width:520px;max-height:80vh;overflow-y:auto;display:flex;flex-direction:column}
+.stats-card-body{padding:0 30px 30px}
+.stats-hdr{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:20px 20px 0 30px;position:sticky;top:0;background:var(--card);z-index:5}
+.stats-x{width:32px;height:32px;flex-shrink:0;border-radius:50%;border:1px solid var(--border);background:transparent;color:var(--muted);font-size:1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s}
+.stats-x:hover{border-color:var(--red);color:var(--red)}
+.stats-card h2{font-size:1.2rem;font-weight:700;margin-bottom:4px;color:var(--accent)}
+.stats-card .sub{font-size:.82rem;color:var(--muted);margin-bottom:20px}
+.stats-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:20px}
+.stat-box{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center}
+.stat-num{font-size:1.6rem;font-weight:700;color:var(--accent);line-height:1}
+.stat-num.green{color:var(--green)}
+.stat-num.orange{color:var(--orange)}
+.stat-label{font-size:.72rem;color:var(--muted);margin-top:4px;text-transform:uppercase;letter-spacing:.6px}
+.stats-close{width:100%;padding:10px;background:transparent;border:1px solid var(--border);border-radius:8px;color:var(--muted);font-family:var(--font);font-size:.85rem;cursor:pointer;margin-top:6px;transition:all .15s}
+.stats-close:hover{border-color:var(--accent);color:var(--accent)}
+.stats-table{width:100%;border-collapse:collapse;font-size:.78rem;margin-bottom:14px}
+.stats-table th{text-align:left;padding:6px 10px;color:var(--muted);font-weight:600;font-size:.68rem;text-transform:uppercase;letter-spacing:.7px;border-bottom:1px solid var(--border)}
+.stats-table td{padding:7px 10px;border-bottom:1px solid rgba(46,51,71,.5)}
+.stats-table tr:last-child td{border-bottom:none}
+.badge-solved{background:rgba(0,230,118,.15);color:var(--green);padding:1px 7px;border-radius:10px;font-size:.68rem;font-weight:600}
+.badge-tried{background:rgba(255,179,0,.15);color:var(--orange);padding:1px 7px;border-radius:10px;font-size:.68rem;font-weight:600}
+.badge-new{background:var(--border);color:var(--muted);padding:1px 7px;border-radius:10px;font-size:.68rem}
+
+/* ── Leaderboard ── */
+.lb-row{display:flex;align-items:center;gap:12px;padding:12px 14px;background:var(--surface);border:1px solid var(--border);border-radius:10px;margin-bottom:8px}
+.lb-row.you{border-color:var(--accent);background:rgba(0,210,255,.06)}
+.lb-rank{width:32px;text-align:center;font-size:1.1rem;font-weight:700;color:var(--muted);flex-shrink:0}
+.lb-rank.gold{color:#FFD700}
+.lb-rank.silver{color:#C0C0C0}
+.lb-rank.bronze{color:#CD7F32}
+.lb-row .avatar{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-size:.9rem;font-weight:700;color:#000;flex-shrink:0}
+.lb-info{flex:1}
+.lb-name{font-weight:600;font-size:.92rem}
+.lb-sub{font-size:.74rem;color:var(--muted);margin-top:2px}
+.lb-pts{font-size:1rem;font-weight:700;color:var(--orange)}
+
+/* ── AI Asistent ── */
+.ai-fab{position:fixed;bottom:24px;left:24px;width:54px;height:54px;border-radius:50%;background:linear-gradient(135deg,#00D2FF,#7B61FF);border:none;color:#fff;font-size:1.5rem;cursor:pointer;box-shadow:0 6px 20px rgba(0,210,255,.35);z-index:400;display:flex;align-items:center;justify-content:center;transition:transform .15s}
+.ai-fab:hover{transform:scale(1.06)}
+.ai-fab .dot{position:absolute;top:6px;right:6px;width:10px;height:10px;border-radius:50%;background:var(--green);border:2px solid var(--bg);display:none}
+.ai-fab .dot.show{display:block}
+.ai-panel{position:fixed;bottom:90px;left:24px;width:360px;max-height:520px;background:var(--card);border:1px solid var(--border);border-radius:14px;box-shadow:0 16px 50px rgba(0,0,0,.45);display:none;flex-direction:column;z-index:401;overflow:hidden}
+.ai-panel.show{display:flex}
+.ai-hdr{padding:12px 16px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.ai-hdr-title{display:flex;align-items:center;gap:8px;font-weight:700;font-size:.92rem}
+.ai-hdr-title .icon{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#00D2FF,#7B61FF);display:flex;align-items:center;justify-content:center;font-size:.9rem}
+.ai-close{background:none;border:none;color:var(--muted);cursor:pointer;font-size:1.1rem;line-height:1}
+.ai-close:hover{color:var(--text)}
+.ai-messages{flex:1;overflow-y:auto;padding:14px 14px 4px;display:flex;flex-direction:column;gap:10px;min-height:200px;max-height:340px}
+.ai-msg{max-width:88%;padding:9px 13px;border-radius:12px;font-size:.84rem;line-height:1.55;white-space:pre-wrap}
+.ai-msg.bot{background:var(--surface);border:1px solid var(--border);align-self:flex-start;border-bottom-left-radius:3px}
+.ai-msg.user{background:linear-gradient(135deg,#00D2FF,#7B61FF);color:#fff;align-self:flex-end;border-bottom-right-radius:3px;font-weight:500}
+.ai-msg code{font-family:var(--mono);background:rgba(0,0,0,.25);padding:1px 5px;border-radius:4px;font-size:.8em}
+.ai-suggestions{display:flex;flex-wrap:wrap;gap:6px;padding:8px 14px 0}
+.ai-chip{padding:5px 11px;background:var(--surface);border:1px solid var(--border);border-radius:14px;font-size:.74rem;color:var(--accent);cursor:pointer;transition:all .15s}
+.ai-chip:hover{border-color:var(--accent);background:rgba(0,210,255,.08)}
+.ai-input-row{display:flex;gap:8px;padding:12px 14px;border-top:1px solid var(--border)}
+.ai-input{flex:1;padding:9px 13px;background:var(--code);border:1px solid var(--border);border-radius:20px;color:var(--text);font-family:var(--font);font-size:.85rem;outline:none}
+.ai-input:focus{border-color:var(--accent)}
+.ai-send{width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,#00D2FF,#7B61FF);border:none;color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.ai-send svg{width:16px;height:16px}
+
+/* ── File:// warning ── */
+#file-warning{position:fixed;inset:0;background:var(--bg);display:none;align-items:center;justify-content:center;z-index:9998;padding:20px}
+#file-warning.show{display:flex}
+.fw-card{background:var(--card);border:1px solid var(--red);border-radius:16px;padding:32px;max-width:520px}
+.fw-card h2{color:var(--red);margin-bottom:12px;font-size:1.2rem}
+.fw-card p{color:var(--text);font-size:.9rem;line-height:1.7;margin-bottom:10px}
+.fw-card code{display:block;background:var(--code);padding:10px 14px;border-radius:8px;font-family:var(--mono);font-size:.85rem;color:var(--accent);margin:8px 0;overflow-x:auto}
+.fw-card .small{color:var(--muted);font-size:.8rem}
+
+/* ── Toast ── */
+.toast{position:fixed;bottom:24px;right:24px;background:var(--card);border:1px solid var(--green);border-radius:10px;padding:12px 18px;font-size:.85rem;color:var(--green);font-weight:600;box-shadow:0 8px 32px rgba(0,0,0,.4);transform:translateY(60px);opacity:0;transition:all .3s cubic-bezier(.17,.67,.35,1.3);z-index:500}
+.toast.show{transform:translateY(0);opacity:1}
+.toast.error{border-color:var(--red);color:var(--red)}
+
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+
+/* ── Update banner ── */
+.update-banner{position:fixed;top:57px;left:0;right:0;z-index:300;padding:10px 20px;background:linear-gradient(90deg,rgba(0,210,255,.12),rgba(123,97,255,.1));border-bottom:1px solid rgba(0,210,255,.25);display:none;align-items:center;gap:12px;font-size:.83rem}
+.update-banner.show{display:flex}
+.update-banner .ub-text{flex:1;color:var(--text)}
+.update-banner .ub-text strong{color:var(--accent)}
+.update-banner .ub-btn{padding:5px 14px;border-radius:6px;border:1px solid rgba(0,210,255,.4);background:rgba(0,210,255,.1);color:var(--accent);font-family:var(--font);font-size:.8rem;font-weight:600;cursor:pointer;transition:all .15s;white-space:nowrap}
+.update-banner .ub-btn:hover{background:rgba(0,210,255,.2)}
+.update-banner .ub-dismiss{color:var(--muted);background:transparent;border:none;cursor:pointer;font-size:1rem;padding:0 4px;line-height:1}
+.update-modal{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:28px;width:420px;box-shadow:0 20px 60px rgba(0,0,0,.5)}
+.update-modal h3{font-size:1.1rem;font-weight:700;color:var(--accent);margin-bottom:6px}
+.update-modal p{font-size:.85rem;color:var(--muted);line-height:1.6;margin-bottom:16px}
+.update-progress{height:6px;background:var(--border);border-radius:3px;overflow:hidden;margin-bottom:8px;display:none}
+.update-progress.show{display:block}
+.update-progress-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));border-radius:3px;width:0;transition:width .3s}
+.update-progress-txt{font-size:.75rem;color:var(--muted);font-family:var(--mono);margin-bottom:14px;display:none}
+.update-progress-txt.show{display:block}
+.update-btns{display:flex;gap:8px;flex-wrap:wrap}
+.update-btns button{padding:8px 16px;border-radius:7px;font-family:var(--font);font-size:.83rem;font-weight:600;cursor:pointer;transition:all .15s}
+.ub-primary{background:linear-gradient(135deg,#00D2FF,#7B61FF);border:none;color:#fff}
+.ub-secondary{background:transparent;border:1px solid var(--border);color:var(--muted)}
+.ub-secondary:hover{border-color:var(--muted);color:var(--text)}
+</style>
+</head>
+<body>
+
+<!-- Loading -->
+<div id="loading">
+  <div class="load-snake">🐍</div>
+  <div class="load-title">Python Učilica</div>
+  <div class="load-sub" id="load-sub">Učitavam Python engine...</div>
+  <div class="load-bar-wrap"><div class="load-bar" id="load-bar"></div></div>
+</div>
+
+<!-- Profili / Onboarding -->
+<div id="onboarding">
+  <div class="onboard-card">
+    <div style="font-size:2.5rem;margin-bottom:12px">🐍</div>
+    <h2 id="profiles-title">Dobrodošao/la!</h2>
+    <p id="profiles-sub">Ovo je tvoja osobna Python Učilica.<br>Upiši svoje ime da počnemo — napredak će se automatski snimati.</p>
+    <div id="profiles-list"></div>
+    <input class="onboard-input" id="name-input" placeholder="Upiši ime (novi profil)..." maxlength="24">
+    <button class="onboard-btn" id="name-ok">Počnimo! →</button>
+    <button class="onboard-btn" id="profiles-cancel" style="display:none;margin-top:8px;background:transparent;border:1px solid var(--border);color:var(--muted)">Otkaži</button>
+  </div>
+</div>
+
+
+<!-- Input modal -->
+<div class="modal-wrap" id="input-modal">
+  <div class="modal">
+    <div class="modal-prompt" id="modal-prompt">Unesi vrijednost:</div>
+    <input class="modal-in" id="modal-in" placeholder="Upiši i pritisni Enter...">
+    <button class="modal-ok" id="modal-ok">OK (Enter)</button>
+    <div class="modal-note">💡 Ovo simulira input() — program čeka tvoj unos</div>
+  </div>
+</div>
+
+<!-- Stats modal -->
+<div class="stats-wrap" id="stats-modal">
+  <div class="stats-card">
+    <div class="stats-hdr">
+      <h2>📊 Moj napredak</h2>
+      <button class="stats-x" id="stats-x" title="Zatvori">✕</button>
+    </div>
+    <div class="stats-card-body">
+      <div class="sub" id="stats-sub"></div>
+      <div class="stats-grid" id="stats-grid"></div>
+      <table class="stats-table" id="stats-table">
+        <thead><tr><th>Zadatak</th><th>Status</th><th>Pokušaji</th><th>Greške</th></tr></thead>
+        <tbody id="stats-body"></tbody>
+      </table>
+      <button class="stats-close" id="stats-close">Zatvori</button>
+      <button class="stats-close" id="stats-reset" style="margin-top:6px;border-color:rgba(255,83,112,.3);color:var(--red)">🗑 Resetuj napredak</button>
+      <button class="stats-close" id="stats-check-update" style="margin-top:6px;border-color:rgba(0,210,255,.3);color:var(--accent)">🔄 Provjeri update</button>
+    </div>
+  </div>
+</div>
+
+<!-- Leaderboard modal -->
+<div class="stats-wrap" id="leaderboard-modal">
+  <div class="stats-card">
+    <div class="stats-hdr">
+      <h2>🏆 Top lista</h2>
+      <button class="stats-x" id="leaderboard-x" title="Zatvori">✕</button>
+    </div>
+    <div class="stats-card-body">
+      <div class="sub">Bodovi se računaju po riješenim zadacima — manje grešaka i pomoći = više bodova!</div>
+      <div id="leaderboard-list" style="margin:18px 0"></div>
+      <button class="stats-close" id="leaderboard-close">Zatvori</button>
+    </div>
+  </div>
+</div>
+
+
+
+<!-- Update banner -->
+<div class="update-banner" id="update-banner">
+  <span class="ub-text" id="update-banner-txt">🔄 Nova verzija dostupna!</span>
+  <button class="ub-btn" id="update-download-btn">⬇ Preuzmi update</button>
+  <button class="ub-btn" id="update-releases-btn">📋 Šta je novo</button>
+  <button class="ub-dismiss" id="update-dismiss" title="Zatvori">✕</button>
+</div>
+
+<!-- Update modal (progress + install) -->
+<div class="stats-wrap" id="update-modal">
+  <div class="update-modal">
+    <h3 id="update-modal-title">⬇ Preuzimanje updatea...</h3>
+    <p id="update-modal-desc">Sačekaj dok se nova verzija preuzme.</p>
+    <div class="update-progress" id="update-progress-bar">
+      <div class="update-progress-fill" id="update-progress-fill"></div>
+    </div>
+    <div class="update-progress-txt" id="update-progress-txt"></div>
+    <div class="update-btns">
+      <button class="ub-primary" id="update-install-btn" style="display:none">🔄 Instaliraj i restartuj</button>
+      <button class="ub-secondary" id="update-modal-close">Zatvori</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<!-- File:// upozorenje -->
+<div id="file-warning">
+  <div class="fw-card">
+    <h2>⚠️ Stranica je otvorena direktno iz fajla</h2>
+    <p>Python Učilica koristi Pyodide (Python za browser), koji zahtijeva da stranica bude poslužena preko <strong>web servera</strong> — ne radi ako se HTML otvori dvoklikom (<code>file://</code>).</p>
+    <p>Pokreni mini server u folderu gdje je <code>index.html</code>:</p>
+    <code>python -m http.server 8000</code>
+    <p>Zatim otvori u browseru:</p>
+    <code>http://localhost:8000</code>
+    <p class="small">Ovo je sigurnosno ograničenje browsera (CORS), ne greška u aplikaciji. Electron desktop verzija ovo automatski rješava.</p>
+  </div>
+</div>
+
+<!-- AI Asistent -->
+<button class="ai-fab" id="ai-fab" title="AI Asistent">
+  🤖<span class="dot" id="ai-dot"></span>
+</button>
+<div class="ai-panel" id="ai-panel">
+  <div class="ai-hdr">
+    <div class="ai-hdr-title"><div class="icon">🤖</div> AI Asistent</div>
+    <button class="ai-close" id="ai-close">✕</button>
+  </div>
+  <div class="ai-messages" id="ai-messages"></div>
+  <div class="ai-suggestions" id="ai-suggestions"></div>
+  <div class="ai-input-row">
+    <input class="ai-input" id="ai-input" placeholder="Pitaj me bilo šta o Pythonu...">
+    <button class="ai-send" id="ai-send"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M1 8l13-6-4 6 4 6z"/></svg></button>
+  </div>
+</div>
+
+
+<!-- Header -->
+<header>
+  <div class="logo">🐍 Python <span class="accent">Učilica</span></div>
+  <div class="header-center">
+    <button class="student-chip" id="profile-chip" title="Promijeni profil">
+      <div class="avatar" id="avatar">?</div>
+      <span id="student-name">—</span>
+      <span style="color:var(--muted);font-size:.7rem">▾</span>
+    </button>
+    <div class="progress-chip">
+      <span id="prog-text" style="color:var(--muted)">0 / 0</span>
+      <div class="progress-bar-mini"><div class="progress-bar-fill" id="prog-fill" style="width:0%"></div></div>
+      <span id="points-chip" style="color:var(--orange);font-weight:700">⭐ 0</span>
+    </div>
+  </div>
+  <div class="header-right">
+    <div class="status-dot loading" id="status-dot"></div>
+    <span id="status-txt" style="font-size:.75rem;color:var(--muted)">Učitavam...</span>
+    <button class="hdr-btn" id="leaderboard-btn">🏆 Top lista</button>
+    <button class="hdr-btn" id="stats-btn">📊 Statistika</button>
+    <span id="ver" style="font-size:.7rem;color:var(--muted)"></span>
+  </div>
+</header>
+
+
+<!-- App -->
+<div class="app">
+  <nav class="sidebar" id="sidebar"></nav>
+  <div class="main">
+    <div class="task-header">
+      <div class="type-badge type-A" id="type-badge">✏ Tip A</div>
+      <div class="task-title" id="task-title">Učitavanje...</div>
+      <div class="task-desc" id="task-desc"></div>
+      <div class="task-meta" id="task-meta"></div>
+      <div class="task-nav">
+        <button class="nav-btn" id="prev-btn">← Prethodna</button>
+        <button class="nav-btn" id="next-btn">Sljedeća →</button>
+        <span class="task-counter" id="task-counter">1 / 27</span>
+      </div>
+    </div>
+    <div class="workspace">
+      <div class="editor-area">
+        <div class="editor-pane">
+          <div class="pane-hdr">
+            <div class="pane-dots"><span></span><span></span><span></span></div>
+            <span>editor.py</span>
+            <span id="run-time"></span>
+          </div>
+          <textarea id="editor" spellcheck="false" placeholder="# Piši Python kod ovdje...&#10;# Ctrl+Enter = Pokreni"></textarea>
+        </div>
+        <div class="output-pane">
+          <div class="pane-hdr"><span>▶ Izlaz</span><span></span></div>
+          <div id="output"><span class="out-placeholder">Izlaz programa će se prikazati ovdje...</span></div>
+        </div>
+      </div>
+      <div class="hint-panel" id="hint-panel"><strong>💡 Pomoć</strong><span id="hint-txt"></span></div>
+      <div class="solution-panel" id="sol-panel"><strong>✅ Rješenje</strong><pre id="sol-txt"></pre></div>
+      <div class="toolbar">
+        <button class="run-btn" id="run-btn" disabled>
+          <svg viewBox="0 0 16 16" fill="currentColor"><path d="M3 2l10 6-10 6z"/></svg>
+          Pokreni (Ctrl+Enter)
+        </button>
+        <button class="tb-btn" id="clear-btn">🗑 Očisti</button>
+        <button class="tb-btn hint" id="hint-btn">💡 Pomoć</button>
+        <button class="tb-btn sol" id="sol-btn">✅ Rješenje</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════
+// ZADACI
+// ═══════════════════════════════════════════════════════
+const LESSONS = [
+  {
+    group:"Blok 1: print()", icon:"📢", tasks:[
+      {type:"A",label:"Dopuni prazninu",title:"Napiši prvu liniju koda",
+       desc:"Dopuni naredbu da ispiše: <strong>Zdravo, svijete!</strong>",
+       starter:'_____("Zdravo, svijete!")',
+       hint:"Naredba za ispis piše se malim slovima i ima 5 slova.",
+       solution:'print("Zdravo, svijete!")'},
+      {type:"A",label:"Dopuni prazninu",title:"Ispiši broj 42",
+       desc:"Dopuni naredbu da ispiše broj <strong>42</strong>. Broj ne ide u navodnike!",
+       starter:"print(___)",
+       hint:"Broj se piše direktno, bez navodnika: print(42)",
+       solution:"print(42)"},
+      {type:"A",label:"Dopuni prazninu",title:'Ispiši: "Imam 14 godina."',
+       desc:"Dopuni — tekst i broj spojiti zarezom u print().",
+       starter:'print("Imam", ___, "godina.")',
+       hint:"Između navodnika staviti broj 14 bez navodnika.",
+       solution:'print("Imam", 14, "godina.")'},
+      {type:"B",label:"Ispravi grešku",title:"Print vs print",
+       desc:"Program treba ispisati <strong>Python je super!</strong> ali javlja grešku.",
+       starter:'Print("Python je super!")',
+       hint:"Python razlikuje velika i mala slova. Pogledaj ime naredbe.",
+       solution:'print("Python je super!")'},
+      {type:"B",label:"Ispravi grešku",title:"Nedostaje zagrada",
+       desc:"Program javlja <code>SyntaxError</code>. Nešto nedostaje.",
+       starter:'print("Zdravo, Amra!"',
+       hint:"Svaka otvorena zagrada ( mora biti zatvorena ).",
+       solution:'print("Zdravo, Amra!")'},
+      {type:"C",label:"Napiši program",title:"Vizit kartica",
+       desc:"Napiši program koji ispisuje vizit karticu: okvir od = znakova, ime, grad, posao, i opet okvir.",
+       starter:"# Napiši program ovdje\n# Koristiti 5x print()\n\n",
+       hint:'print("========================") za okvir',
+       solution:'print("========================")\nprint("  Ime:   Jasmin Suljić")\nprint("  Grad:  Kalesija")\nprint("  Posao: Nastavnik")\nprint("========================")'},
+      {type:"C",label:"Napiši program",title:"Mini kalkulator — samo print",
+       desc:"Napiši program koji ispisuje rezultate 7+3, 7-3, 7×3 i 7÷3, svaki u zasebnom redu s opisom.",
+       starter:"# print('7 + 3 =', 7 + 3)\n# ...\n\n",
+       hint:"Za svaku operaciju jedan print. Dijeljenje: 7 / 3",
+       solution:'print("7 + 3 =", 7 + 3)\nprint("7 - 3 =", 7 - 3)\nprint("7 * 3 =", 7 * 3)\nprint("7 / 3 =", 7 / 3)'},
+    ]
+  },
+  {
+    group:"Blok 2: Varijable", icon:"📦", tasks:[
+      {type:"A",label:"Dopuni prazninu",title:"Spremi u varijablu",
+       desc:"Dopuni program da spremi broj 8 u varijablu <strong>duzina</strong> i ispiše je.",
+       starter:"duzina ___ 8\nprint(\"Dužina:\", _______)",
+       hint:"Dodjela se vrši znakom = (jedno jednako).",
+       solution:'duzina = 8\nprint("Dužina:", duzina)'},
+      {type:"A",label:"Dopuni prazninu",title:"Izračunaj površinu",
+       desc:"Varijable su kreirane. Dopuni da se izračuna <strong>povrsina = duzina × sirina</strong>.",
+       starter:"duzina = 6\nsirina = 4\npovrsina = ______ * ______\nprint(\"Površina:\", ________)",
+       hint:"povrsina = duzina * sirina",
+       solution:'duzina = 6\nsirina = 4\npovrsina = duzina * sirina\nprint("Površina:", povrsina)'},
+      {type:"A",label:"Dopuni prazninu",title:"Uvećaj bodove za 10",
+       desc:"Dopuni liniju koja povećava varijablu <strong>bodovi</strong> za 10.",
+       starter:'bodovi = 25\nprint("Prije:", bodovi)\nbodovi = bodovi ___ 10\nprint("Poslije:", bodovi)',
+       hint:"bodovi = bodovi + 10 — uzmi staru vrijednost i dodaj 10",
+       solution:'bodovi = 25\nprint("Prije:", bodovi)\nbodovi = bodovi + 10\nprint("Poslije:", bodovi)'},
+      {type:"B",label:"Ispravi grešku",title:"Tekst bez navodnika",
+       desc:"Program javlja <code>NameError</code>. Python misli da je 'Sarajevo' ime varijable.",
+       starter:"grad = Sarajevo\nprint(\"Grad:\", grad)",
+       hint:'Tekst mora biti u navodnicima: grad = "Sarajevo"',
+       solution:'grad = "Sarajevo"\nprint("Grad:", grad)'},
+      {type:"B",label:"Ispravi grešku",title:"Varijabla prije kreiranja",
+       desc:"Program javlja <code>NameError</code>. Python čita odozgo — nešto je u krivom redoslijedu.",
+       starter:'print("Cijena:", cijena)\ncijena = 19.99',
+       hint:"Varijabla mora biti kreirana PRIJE nego što je koristimo.",
+       solution:'cijena = 19.99\nprint("Cijena:", cijena)'},
+      {type:"C",label:"Napiši program",title:"Kalkulator kruga",
+       desc:"Napravi varijablu <strong>r = 5</strong>. Izračunaj i ispiši površinu (3.14 × r × r) i opseg (2 × 3.14 × r).",
+       starter:"# r = polumjer\n\n",
+       hint:"povrsina = 3.14 * r * r",
+       solution:"r = 5\npovrsina = 3.14 * r * r\nopseg = 2 * 3.14 * r\nprint(\"Polumjer:\", r)\nprint(\"Površina:\", povrsina)\nprint(\"Opseg:\", opseg)"},
+      {type:"C",label:"Napiši program",title:"Kupovina — račun",
+       desc:"Kruh=1.80 KM, mlijeko=1.20 KM, šećer=2.50 KM. Spremi u varijable, izračunaj ukupno, ispiši račun.",
+       starter:"# Kreiraj varijable pa izračunaj ukupno\n\n",
+       hint:"ukupno = kruh + mlijeko + secer",
+       solution:'kruh = 1.80\nmlijeko = 1.20\nsecer = 2.50\nukupno = kruh + mlijeko + secer\nprint("Kruh:   ", kruh, "KM")\nprint("Mlijeko:", mlijeko, "KM")\nprint("Šećer:  ", secer, "KM")\nprint("--------")\nprint("UKUPNO: ", ukupno, "KM")'},
+    ]
+  },
+  {
+    group:"Blok 3: input()", icon:"⌨️", tasks:[
+      {type:"A",label:"Dopuni prazninu",title:"Pozdrav s imenom",
+       desc:"Dopuni da program traži ime od korisnika i pozdravlja ga.",
+       starter:'ime = _____("Tvoje ime: ")\nprint("Zdravo,", ime)',
+       hint:"Naredba za primanje unosa zove se input()",
+       solution:'ime = input("Tvoje ime: ")\nprint("Zdravo,", ime)'},
+      {type:"A",label:"Dopuni prazninu",title:"Sabiranje dva broja",
+       desc:"Dopuni — korisnik unosi dva broja, program ispisuje zbir. Pazi na konverziju!",
+       starter:'a = ___(input("Broj 1: "))\nb = ___(input("Broj 2: "))\nprint("Zbir:", a + b)',
+       hint:"int() pretvara tekst u broj: a = int(input(...))",
+       solution:'a = int(input("Broj 1: "))\nb = int(input("Broj 2: "))\nprint("Zbir:", a + b)'},
+      {type:"B",label:"Ispravi grešku",title:"input() vraća tekst!",
+       desc:"Program treba sabriti 10+20=30 ali ispisuje 1020. Pronađi grešku.",
+       starter:'a = input("Broj 1: ")\nb = input("Broj 2: ")\nprint("Zbir:", a + b)',
+       hint:"input() vraća tekst. Za sabiranje treba int(): a = int(input(...))",
+       solution:'a = int(input("Broj 1: "))\nb = int(input("Broj 2: "))\nprint("Zbir:", a + b)'},
+      {type:"B",label:"Ispravi grešku",title:"int() za decimalni broj",
+       desc:"Korisnik upiše 1.75 ali program javlja grešku. Zašto?",
+       starter:'visina = int(input("Visina (m): "))\nprint("Visina:", visina, "m")',
+       hint:"int() ne prima decimalne. Za decimalne: float()",
+       solution:'visina = float(input("Visina (m): "))\nprint("Visina:", visina, "m")'},
+      {type:"C",label:"Napiši program",title:"Konvertor temperature",
+       desc:"Korisnik unosi °C (decimalni). Program ispisuje °F. Formula: <strong>F = C × 1.8 + 32</strong>",
+       starter:"# celsius = float(input(...))\n# fahrenheit = ?\n\n",
+       hint:"fahrenheit = celsius * 1.8 + 32",
+       solution:'celsius = float(input("Temperatura u °C: "))\nfahrenheit = celsius * 1.8 + 32\nprint(celsius, "°C =", fahrenheit, "°F")'},
+      {type:"C",label:"Napiši program",title:"Prosjek tri ocjene",
+       desc:"Korisnik unosi 3 ocjene (cijeli brojevi). Program ispisuje svaku i prosjek.",
+       starter:"# o1 = int(input(...))\n\n",
+       hint:"prosjek = (o1 + o2 + o3) / 3",
+       solution:'o1 = int(input("Prva ocjena: "))\no2 = int(input("Druga ocjena: "))\no3 = int(input("Treća ocjena: "))\nprosjek = (o1 + o2 + o3) / 3\nprint("Ocjene:", o1, o2, o3)\nprint("Prosjek:", prosjek)'},
+    ]
+  },
+  {
+    group:"Blok 4: if / elif / else", icon:"🔀", tasks:[
+      {type:"A",label:"Dopuni prazninu",title:"Osnovna if naredba",
+       desc:"Dopuni da program provjeri je li ocjena 5.",
+       starter:"ocjena = 5\n__ ocjena ___ 5:\n    print(\"Odličan!\")",
+       hint:"if ocjena == 5: — dva znaka jednakosti za poređenje!",
+       solution:'ocjena = 5\nif ocjena == 5:\n    print("Odličan!")'},
+      {type:"A",label:"Dopuni prazninu",title:"if ... else",
+       desc:"Korisnik unosi broj. Dopuni da kaže je li pozitivan ili nije.",
+       starter:'broj = int(input("Upiši broj: "))\nif broj ___ 0:\n    print("Pozitivan")\n____:\n    print("Negativan ili nula")',
+       hint:"if broj > 0: ... else: — dvotačka obavezna!",
+       solution:'broj = int(input("Upiši broj: "))\nif broj > 0:\n    print("Pozitivan")\nelse:\n    print("Negativan ili nula")'},
+      {type:"A",label:"Dopuni prazninu",title:"Dijeljenje — provjera nule",
+       desc:"Dopuni uvjet koji sprječava <code>ZeroDivisionError</code>. Dijeljenje s nulom ruši program!",
+       starter:'a = int(input("Broj: "))\nb = int(input("Djelilac: "))\n__ b ___ 0:\n    print("Greška! 0 ne može biti djelilac — rezultat bi bio beskonačnost.")\n____:\n    print(a, "/", b, "=", a / b)',
+       hint:"if b == 0: — provjeri je li b nula PRIJE dijeljenja",
+       solution:'a = int(input("Broj: "))\nb = int(input("Djelilac: "))\nif b == 0:\n    print("Greška! 0 ne može biti djelilac — rezultat bi bio beskonačnost.")\nelse:\n    print(a, "/", b, "=", a / b)'},
+      {type:"A",label:"Dopuni prazninu",title:"elif — tri opcije",
+       desc:"Dopuni: jako vruće (>35), vruće (>25), ili nije vruće.",
+       starter:'temp = int(input("Temperatura: "))\nif temp > 35:\n    print("Jako vruće!")\n______ temp > 25:\n    print("Vruće.")\n____:\n    print("Nije vruće.")',
+       hint:"elif za drugu provjeru, else za sve ostalo",
+       solution:'temp = int(input("Temperatura: "))\nif temp > 35:\n    print("Jako vruće!")\nelif temp > 25:\n    print("Vruće.")\nelse:\n    print("Nije vruće.")'},
+      {type:"B",label:"Ispravi grešku",title:"Nedostaje dvotačka",
+       desc:"Program javlja <code>SyntaxError</code>. Nešto nedostaje iza if.",
+       starter:'ocjena = int(input("Ocjena: "))\nif ocjena >= 3\n    print("Prošao/la si.")',
+       hint:"Iza svakog if, elif i else MORA stajati dvotačka (:)",
+       solution:'ocjena = int(input("Ocjena: "))\nif ocjena >= 3:\n    print("Prošao/la si.")'},
+      {type:"B",label:"Ispravi grešku",title:"= umjesto ==",
+       desc:"Program javlja <code>SyntaxError</code>. Greška je u if uvjetu.",
+       starter:'lozinka = input("Lozinka: ")\nif lozinka = "tajno":\n    print("Ispravno!")',
+       hint:"= je dodjela, == je poređenje. U if uvjetu uvijek ==",
+       solution:'lozinka = input("Lozinka: ")\nif lozinka == "tajno":\n    print("Ispravno!")'},
+      {type:"B",label:"Ispravi grešku",title:"Nedostaje uvlačenje",
+       desc:"Program javlja <code>IndentationError</code>. Kod unutar if mora biti uvučen!",
+       starter:"if True:\nprint(\"Radi!\")",
+       hint:"Kod unutar if mora imati 4 razmaka ispred: '    print(...)'",
+       solution:'if True:\n    print("Radi!")'},
+      {type:"C",label:"Napiši program",title:"Kalkulator s provjerom dijeljenja",
+       desc:"Korisnik unosi dva broja. Ispiši zbir, razliku, produkt. Za dijeljenje: <strong>provjeri je li djelilac 0</strong> — ako jeste, objasni zašto ne možemo dijeliti.",
+       starter:"# a i b od korisnika\n# Zbir, razlika, produkt\n# if b == 0 → objasni, else → podijeli\n\n",
+       hint:"if b == 0: print('Ne može — 0 kao djelilac daje beskonačnost') else: print(a/b)",
+       solution:'a = int(input("Broj 1: "))\nb = int(input("Broj 2: "))\nprint("Zbir:", a + b)\nprint("Razlika:", a - b)\nprint("Produkt:", a * b)\nif b == 0:\n    print("Dijeljenje nije moguće — djelilac je 0 (rezultat bi bio beskonačnost)")\nelse:\n    print("Količnik:", a / b)'},
+      {type:"C",label:"Napiši program",title:"Kalkulator pravougaonika s provjerom",
+       desc:"Korisnik unosi dužinu i širinu. Ako je ≤ 0 → greška. Inače → ispiši površinu i obim. Bonus: ispiši je li kvadrat.",
+       starter:"# duzina i sirina od korisnika\n# Provjeri jesu li pozitivni\n# Računaj i ispiši\n\n",
+       hint:"if duzina <= 0 or sirina <= 0: greška, else: računaj",
+       solution:'duzina = int(input("Dužina: "))\nsirina = int(input("Širina: "))\nif duzina <= 0 or sirina <= 0:\n    print("Greška! Unesite pozitivne vrijednosti.")\nelse:\n    povrsina = duzina * sirina\n    obim = 2 * (duzina + sirina)\n    print("Površina:", povrsina)\n    print("Obim:", obim)\n    if duzina == sirina:\n        print("Napomena: ovo je kvadrat!")'},
+    ]
+  }
+];
+
+// ═══════════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════════
+let pyodide = null;
+let pyReady = false;
+let curG = 0, curT = 0;
+let inputResolve = null;
+let progress = null;
+
+const isElectron = !!(window.electronAPI);
+
+// ── Flatlist helper ──
+function allTasks() {
+  const r = [];
+  LESSONS.forEach((g,gi) => g.tasks.forEach((t,ti) => r.push({...t,gi,ti,idx:r.length})));
+  return r;
+}
+function totalTasks() { return allTasks().length; }
+function curKey() { return `${curG}-${curT}`; }
+function curTaskData() { return LESSONS[curG].tasks[curT]; }
+
+// ═══════════════════════════════════════════════════════
+// NAPREDAK (multi-profil + bodovi)
+// ═══════════════════════════════════════════════════════
+let allProgress = null; // { version, currentProfile, profiles:{name:{...}} }
+
+async function loadProgress() {
+  if (isElectron) {
+    allProgress = await window.electronAPI.loadProgress();
+  } else {
+    try {
+      const raw = localStorage.getItem('python_ucilica_progress');
+      allProgress = raw ? JSON.parse(raw) : null;
+    } catch(e) { allProgress = null; }
+  }
+  if (!allProgress) allProgress = defaultAllProgress();
+
+  // Migracija sa v1 (jedan učenik) na v2 (profili)
+  if (!allProgress.profiles) {
+    const oldName = (allProgress.student && allProgress.student.name) || '';
+    const migrated = defaultAllProgress();
+    if (oldName) {
+      migrated.profiles[oldName] = {
+        createdAt: allProgress.student.createdAt || new Date().toISOString(),
+        lastSeen: allProgress.student.lastSeen || new Date().toISOString(),
+        currentGroup: allProgress.currentGroup || 0,
+        currentTask: allProgress.currentTask || 0,
+        totalTimeSeconds: allProgress.totalTimeSeconds || 0,
+        tasks: allProgress.tasks || {},
+        points: 0
+      };
+      migrated.currentProfile = oldName;
+      recalcPoints(migrated.profiles[oldName]);
+    }
+    allProgress = migrated;
+  }
+
+  if (!allProgress.currentProfile || !allProgress.profiles[allProgress.currentProfile]) {
+    allProgress.currentProfile = Object.keys(allProgress.profiles)[0] || null;
+  }
+
+  if (allProgress.currentProfile) {
+    progress = allProgress.profiles[allProgress.currentProfile];
+    progress.sessionStart = Date.now();
+    curG = progress.currentGroup || 0;
+    curT = progress.currentTask  || 0;
+    if (curG >= LESSONS.length) curG = 0;
+    if (curT >= LESSONS[curG].tasks.length) curT = 0;
+  } else {
+    progress = null;
+  }
+}
+
+function defaultAllProgress() {
+  return { version: 2, currentProfile: null, profiles: {} };
+}
+
+function defaultProfile() {
+  return { createdAt: new Date().toISOString(), lastSeen: null,
+           currentGroup: 0, currentTask: 0, totalTimeSeconds: 0,
+           sessionStart: null, tasks: {}, points: 0 };
+}
+
+async function saveProgress() {
+  if (!progress) return;
+  progress.currentGroup = curG;
+  progress.currentTask  = curT;
+  progress.lastSeen = new Date().toISOString();
+  recalcPoints(progress);
+  if (isElectron) {
+    await window.electronAPI.saveProgress(allProgress);
+  } else {
+    try { localStorage.setItem('python_ucilica_progress', JSON.stringify(allProgress)); } catch(e) {}
+  }
+}
+
+// ── Bodovi ──
+const TASK_BASE_POINTS = { A: 10, B: 15, C: 20 };
+function recalcPoints(profile) {
+  let total = 0;
+  for (const t of allTasks()) {
+    const key = `${t.gi}-${t.ti}`;
+    const tp = profile.tasks[key];
+    if (!tp || !tp.solved) continue;
+    let pts = TASK_BASE_POINTS[t.type] || 10;
+    pts -= (tp.hintsUsed || 0) * 2;
+    if (tp.solutionViewed) pts -= 5;
+    pts -= Math.max(0, (tp.errors || 0) - 1); // prva greška se ne kažnjava
+    pts = Math.max(2, pts);
+    total += pts;
+  }
+  profile.points = total;
+  return total;
+}
+
+function getTaskProgress(key) {
+  if (!progress.tasks[key]) progress.tasks[key] = {firstAttempt:null,lastAttempt:null,attempts:0,errors:0,solved:false,solvedAt:null,hintsUsed:0,solutionViewed:false,timeSeconds:0};
+  return progress.tasks[key];
+}
+
+function recordAttempt(key, hasError) {
+  const tp = getTaskProgress(key);
+  const now = new Date().toISOString();
+  if (!tp.firstAttempt) tp.firstAttempt = now;
+  tp.lastAttempt = now;
+  tp.attempts++;
+  if (hasError) tp.errors++;
+  else if (!tp.solved) { tp.solved = true; tp.solvedAt = now; }
+  saveProgress();
+}
+
+function recordHint(key) {
+  getTaskProgress(key).hintsUsed++;
+  saveProgress();
+}
+
+function recordSolutionView(key) {
+  getTaskProgress(key).solutionViewed = true;
+  saveProgress();
+}
+
+// ── Profili ──
+function listProfiles() {
+  return Object.entries(allProgress.profiles).map(([name, p]) => {
+    recalcPoints(p);
+    const all = allTasks();
+    const solved = all.filter(t => (p.tasks[`${t.gi}-${t.ti}`]||{}).solved).length;
+    return { name, points: p.points, solved, total: all.length, lastSeen: p.lastSeen };
+  });
+}
+
+function switchProfile(name) {
+  if (progress) {
+    progress.totalTimeSeconds += Math.round((Date.now()-(progress.sessionStart||Date.now()))/1000);
+    progress.sessionStart = null;
+  }
+  allProgress.currentProfile = name;
+  progress = allProgress.profiles[name];
+  progress.sessionStart = Date.now();
+  curG = progress.currentGroup || 0;
+  curT = progress.currentTask  || 0;
+  if (curG >= LESSONS.length) curG = 0;
+  if (curT >= LESSONS[curG].tasks.length) curT = 0;
+  saveProgress();
+  buildSidebar(); loadTask();
+}
+
+function createProfile(name) {
+  if (!name || allProgress.profiles[name]) return false;
+  allProgress.profiles[name] = defaultProfile();
+  switchProfile(name);
+  return true;
+}
+
+
+
+// ═══════════════════════════════════════════════════════
+// UI — Header
+// ═══════════════════════════════════════════════════════
+function updateHeader() {
+  const name = allProgress.currentProfile || '—';
+  document.getElementById('student-name').textContent = name;
+  document.getElementById('avatar').textContent = name.charAt(0).toUpperCase() || '?';
+
+  const all = allTasks();
+  const solved = all.filter(t => {
+    const tp = progress.tasks[`${t.gi}-${t.ti}`];
+    return tp && tp.solved;
+  }).length;
+  recalcPoints(progress);
+  document.getElementById('prog-text').textContent = `${solved} / ${all.length}`;
+  document.getElementById('prog-fill').style.width = `${Math.round(solved/all.length*100)}%`;
+  const ptsEl = document.getElementById('points-chip');
+  if (ptsEl) ptsEl.textContent = `⭐ ${progress.points || 0}`;
+}
+
+// ═══════════════════════════════════════════════════════
+// UI — Sidebar
+// ═══════════════════════════════════════════════════════
+function buildSidebar() {
+  const sb = document.getElementById('sidebar');
+  sb.innerHTML = '';
+
+  // Mini stats
+  const all = allTasks();
+  const solved = all.filter(t => (progress.tasks[`${t.gi}-${t.ti}`]||{}).solved).length;
+  const tried  = all.filter(t => { const p = progress.tasks[`${t.gi}-${t.ti}`]; return p && p.attempts > 0 && !p.solved; }).length;
+  const mini = document.createElement('div');
+  mini.className = 'sb-stats';
+  mini.innerHTML = `
+    <div class="sb-stats-row"><span>Riješeno</span><span style="color:var(--green)">${solved}</span></div>
+    <div class="sb-stats-row"><span>U toku</span><span style="color:var(--orange)">${tried}</span></div>
+    <div class="sb-stats-row"><span>Ukupno</span><span>${all.length}</span></div>
+  `;
+  sb.appendChild(mini);
+
+  LESSONS.forEach((group, gi) => {
+    const sec = document.createElement('div');
+    sec.className = 'sb-section';
+    sec.textContent = group.group;
+    sb.appendChild(sec);
+
+    group.tasks.forEach((task, ti) => {
+      const key = `${gi}-${ti}`;
+      const tp  = progress.tasks[key];
+      const isActive = gi === curG && ti === curT;
+      const isSolved = tp && tp.solved;
+      const isTried  = tp && tp.attempts > 0 && !isSolved;
+
+      const btn = document.createElement('button');
+      btn.className = 'lesson-btn' + (isActive ? ' active' : '');
+      btn.innerHTML = `
+        <div class="lb-icon">${group.icon}</div>
+        <div class="lb-info">
+          <div class="lb-title">${task.title}</div>
+          <div class="lb-sub">Tip ${task.type} — ${task.label}</div>
+        </div>
+        <div class="lb-badge ${isSolved?'solved':isTried?'attempted':''}">${isSolved?'✓':isTried?'…':''}</div>
+      `;
+      btn.addEventListener('click', () => { curG=gi; curT=ti; loadTask(); buildSidebar(); saveProgress(); });
+      sb.appendChild(btn);
+    });
+  });
+
+  updateHeader();
+}
+
+// ═══════════════════════════════════════════════════════
+// UI — Load task
+// ═══════════════════════════════════════════════════════
+function loadTask() {
+  const task = curTaskData();
+  const key  = curKey();
+  const tp   = progress.tasks[key];
+  const all  = allTasks();
+  const flat = all.find(t => t.gi===curG && t.ti===curT);
+
+  // Badge
+  const badge = document.getElementById('type-badge');
+  badge.className = `type-badge type-${task.type}`;
+  badge.textContent = {A:'✏ Tip A — Dopuni', B:'🐛 Tip B — Ispravi grešku', C:'💻 Tip C — Napiši program'}[task.type];
+
+  document.getElementById('task-title').textContent = task.title;
+  document.getElementById('task-desc').innerHTML  = task.desc;
+  document.getElementById('task-counter').textContent = `${(flat?.idx||0)+1} / ${all.length}`;
+  document.getElementById('hint-txt').textContent = task.hint || '';
+  document.getElementById('sol-txt').textContent  = task.solution || '';
+  document.getElementById('hint-panel').classList.remove('show');
+  document.getElementById('sol-panel').classList.remove('show');
+  document.getElementById('run-time').textContent = '';
+
+  // Task meta chips
+  const meta = document.getElementById('task-meta');
+  meta.innerHTML = '';
+  if (tp) {
+    if (tp.solved) meta.innerHTML += `<span class="meta-chip green">✓ Riješeno</span>`;
+    if (tp.attempts) meta.innerHTML += `<span class="meta-chip">Pokušaji: ${tp.attempts}</span>`;
+    if (tp.errors)   meta.innerHTML += `<span class="meta-chip orange">Greške: ${tp.errors}</span>`;
+    if (tp.solutionViewed) meta.innerHTML += `<span class="meta-chip">Rješenje pogledano</span>`;
+  }
+
+  // Editor — ako je riješen, prikaži rješenje, inače starter
+  document.getElementById('editor').value = (tp && tp.solved && task.solution) ? task.solution : (task.starter || '');
+
+  // Output
+  document.getElementById('output').innerHTML = '<span class="out-placeholder">Izlaz programa će se prikazati ovdje...</span>';
+
+  // Nav
+  document.getElementById('prev-btn').disabled = (curG===0 && curT===0);
+  const lastG = LESSONS.length-1;
+  document.getElementById('next-btn').disabled = (curG===lastG && curT===LESSONS[lastG].tasks.length-1);
+
+  document.getElementById('editor').focus();
+}
+
+// ═══════════════════════════════════════════════════════
+// NAV
+// ═══════════════════════════════════════════════════════
+document.getElementById('prev-btn').addEventListener('click', () => {
+  if (curT > 0) curT--;
+  else if (curG > 0) { curG--; curT = LESSONS[curG].tasks.length-1; }
+  loadTask(); buildSidebar(); saveProgress();
+});
+document.getElementById('next-btn').addEventListener('click', () => {
+  if (curT < LESSONS[curG].tasks.length-1) curT++;
+  else if (curG < LESSONS.length-1) { curG++; curT=0; }
+  loadTask(); buildSidebar(); saveProgress();
+});
+
+// ═══════════════════════════════════════════════════════
+// HINT / SOLUTION
+// ═══════════════════════════════════════════════════════
+document.getElementById('hint-btn').addEventListener('click', () => {
+  document.getElementById('hint-panel').classList.toggle('show');
+  document.getElementById('sol-panel').classList.remove('show');
+  recordHint(curKey());
+});
+document.getElementById('sol-btn').addEventListener('click', () => {
+  document.getElementById('sol-panel').classList.toggle('show');
+  document.getElementById('hint-panel').classList.remove('show');
+  recordSolutionView(curKey());
+  buildSidebar();
+});
+document.getElementById('clear-btn').addEventListener('click', () => {
+  document.getElementById('output').innerHTML = '<span class="out-placeholder">Izlaz programa će se prikazati ovdje...</span>';
+  document.getElementById('run-time').textContent = '';
+});
+
+// ═══════════════════════════════════════════════════════
+// INPUT MODAL
+// ═══════════════════════════════════════════════════════
+function askInput(prompt) {
+  return new Promise(resolve => {
+    inputResolve = resolve;
+    document.getElementById('modal-prompt').textContent = prompt || 'Unesi vrijednost:';
+    document.getElementById('modal-in').value = '';
+    document.getElementById('input-modal').classList.add('show');
+    setTimeout(() => document.getElementById('modal-in').focus(), 40);
+  });
+}
+function submitInput() {
+  const val = document.getElementById('modal-in').value;
+  document.getElementById('input-modal').classList.remove('show');
+  if (inputResolve) { inputResolve(val); inputResolve = null; }
+}
+document.getElementById('modal-ok').addEventListener('click', submitInput);
+document.getElementById('modal-in').addEventListener('keydown', e => { if(e.key==='Enter') submitInput(); });
+
+// ═══════════════════════════════════════════════════════
+// OUTPUT
+// ═══════════════════════════════════════════════════════
+function appendOut(text, cls) {
+  const box = document.getElementById('output');
+  if (box.querySelector('.out-placeholder')) box.innerHTML = '';
+  const d = document.createElement('div');
+  d.className = cls || 'out-normal';
+  d.textContent = text;
+  box.appendChild(d);
+  box.scrollTop = box.scrollHeight;
+}
+
+// ═══════════════════════════════════════════════════════
+// GREŠKE — prilagođene djeci, vezane za zadatak
+// ═══════════════════════════════════════════════════════
+
+// Svaki tip greške ima: opću poruku + savjet vezan za zadatak
+const ERROR_HINTS = {
+  // Tip A zadaci — dopuni prazninu
+  'A': {
+    'SyntaxError':      'Provjeri jesi li popunio/la sve praznine (___). Možda nedostaje navodni znak ili zagrada.',
+    'NameError':        'Provjeri praznine — možda si napisao/la pogrešno ime naredbe ili varijable.',
+    'IndentationError': 'Provjeri uvlačenje — kod unutar if mora imati 4 razmaka ispred.',
+    'TypeError':        'Provjeri praznine — možda miješaš tekst i broj bez konverzije.',
+    'ValueError':       'Provjeri praznine — možda nedostaje int() ili float() oko input().',
+    'ZeroDivisionError':'Provjeri prazninu u uvjetu — treba provjeriti je li djelilac nula PRIJE dijeljenja.',
+  },
+  // Tip B zadaci — ispravi grešku
+  'B': {
+    'SyntaxError':      'Na pravom si tragu! Pažljivo pročitaj svaki znak u kodu — jedna sitnica pravi razliku.',
+    'NameError':        'Imaš grešku u imenu — Python razlikuje velika i mala slova. Je li sve napisano točno?',
+    'IndentationError': 'Uvlačenje nije ispravno. Kod unutar if/else mora biti uvučen za tačno 4 razmaka.',
+    'TypeError':        'Miješaš tekst i broj. Jedan od njih treba pretvoriti — int() ili str().',
+    'ValueError':       'Pokušaš pretvoriti nešto što se ne može pretvoriti. Provjeri int() i float() pozive.',
+    'ZeroDivisionError':'Dijeljenje s nulom! Provjeri logiku — treba provjeriti vrijednost PRIJE dijeljenja.',
+  },
+  // Tip C zadaci — napiši program
+  'C': {
+    'SyntaxError':      'Greška u pisanju koda. Provjeri: svaka otvorena zagrada ( mora biti zatvorena ), svaki navodni znak " mora biti zatvoren, i svaki if/else mora imati dvotačku :',
+    'NameError':        'Koristiš varijablu koja nije kreirana. Provjeri: je li varijabla definisana PRIJE nego je koristiš? Je li ime točno napisano?',
+    'IndentationError': 'Kod unutar if, elif ili else mora biti uvučen za 4 razmaka. Bez uvlačenja Python ne zna što pripada if bloku.',
+    'TypeError':        'Ne možeš direktno sabirati ili spajati tekst i broj. Koristi int() ili float() za pretvaranje, ili str() za ispis.',
+    'ValueError':       'Korisnik je unio nešto što se ne može pretvoriti u broj. Provjeri koristiš li int() ili float() ispravno oko input().',
+    'ZeroDivisionError':'Pokušao/la si dijeliti s nulom — to matematički nije moguće! Dodaj provjeru: if nazivnik == 0: prije dijeljenja.',
+  }
+};
+
+// Specifične poruke po zadatku (gi-ti → tip greške → poruka)
+const TASK_ERRORS = {
+  // Blok 1 — print()
+  '0-0': { 'NameError':  'Provjeri ime naredbe — da li si napisao/la print malim slovima?' },
+  '0-1': { 'SyntaxError':'Provjeri zagrade — print treba dvije zagrade: print(42)' },
+  '0-3': { 'NameError':  'Python razlikuje Print i print. Naredba se uvijek piše malim slovima: print' },
+  '0-4': { 'SyntaxError':'Broji zagrade — svaka ( mora imati svoju ). Koliko imaš otvorenih?' },
+  // Blok 2 — varijable
+  '1-0': { 'SyntaxError':  'Dodjela se piše jednim = znakom: duzina = 8. Dva znaka == koriste se samo za poređenje.' },
+  '1-3': { 'NameError':    'Tekst mora biti u navodnicima: grad = "Sarajevo". Bez navodnika Python misli da je Sarajevo ime varijable!' },
+  '1-4': { 'NameError':    'Python čita kod odozgo prema dolje. Varijabla mora biti kreirana PRIJE nego je koristiš. Zamijeni redoslijed!' },
+  // Blok 3 — input()
+  '2-0': { 'NameError':    'Naredba za primanje unosa zove se input() — provjeri jesi li napisao/la točno to ime.' },
+  '2-1': { 'TypeError':    'input() vraća tekst, ne broj! Bez int() sabiraš tekst: "10"+"20" = "1020" umjesto 30.' },
+  '2-2': { 'TypeError':    'Oba broja trebaju int(): a = int(input(...)) i b = int(input(...)). Nedostaje konverzija!' },
+  '2-3': { 'TypeError':    'input() uvijek vraća tekst. Čak i kad korisnik upiše 10, to je tekst "10". Treba int() ili float()!' },
+  '2-4': { 'ValueError':   '1.75 nije cijeli broj — int() ne može to prihvatiti. Za decimalne brojeve koristi float() umjesto int().' },
+  // Blok 4 — if
+  '3-0': { 'SyntaxError':  'if uvjet treba dva znaka jednakosti: if ocjena == 5. Jedan = je dodjela, dva == je poređenje!' },
+  '3-1': { 'SyntaxError':  'Provjeri: if i else moraju imati dvotačku : na kraju. A kod ispod mora biti uvučen.' },
+  '3-2': { 'ZeroDivisionError': 'Ovo je tačno ono što zadatak traži! Sada dodaj if b == 0 provjeru PRIJE linije s dijeljenjem.' },
+  '3-4': { 'SyntaxError':  'Nakon if uvjeta MORA stajati dvotačka :  →  if ocjena >= 3:' },
+  '3-5': { 'SyntaxError':  'U if uvjetu uvijek koristimo == (dva znaka). Jedan = je dodjela varijabli, ne poređenje!' },
+  '3-6': { 'IndentationError': 'Kod unutar if mora biti uvučen — stavi 4 razmaka ili Tab ispred print naredbe.' },
+};
+
+function friendlyError(raw, task) {
+  const key  = curKey();                       // npr. "0-3"
+  const type = task?.type || 'C';             // A, B ili C
+
+  // Izvuci ime greške iz Python tracebacka
+  const errName = ['ZeroDivisionError','NameError','SyntaxError',
+                   'IndentationError','ValueError','TypeError',
+                   'AttributeError','KeyError','IndexError']
+    .find(e => raw.includes(e)) || 'Error';
+
+  // 1. Specifična poruka za ovaj tačan zadatak
+  const taskSpecific = TASK_ERRORS[key]?.[errName];
+
+  // 2. Poruka vezana za tip zadatka (A/B/C)
+  const typeHint = ERROR_HINTS[type]?.[errName];
+
+  // 3. Izvuci ime varijable ako je NameError
+  let varName = '';
+  if (errName === 'NameError') {
+    const m = raw.match(/name '(.+?)' is not defined/);
+    varName = m ? ` ('${m[1]}')` : '';
+  }
+
+  // 4. Izvuci broj linije ako postoji
+  let lineInfo = '';
+  const lineMatch = raw.match(/line (\d+)/);
+  if (lineMatch) lineInfo = `  [linija ${lineMatch[1]}]`;
+
+  // Složi poruku
+  const lines = [];
+
+  switch (errName) {
+    case 'ZeroDivisionError':
+      lines.push('❌  Greška: Dijeljenje s nulom!');
+      lines.push('');
+      lines.push('   U matematici, kao i u Pythonu, nije moguće dijeliti bilo koji');
+      lines.push('   broj s nulom — rezultat bi bio beskonačnost (∞).');
+      lines.push('');
+      lines.push('   Rješenje: Provjeri je li djelilac jednak nuli PRIJE dijeljenja:');
+      lines.push('      if b == 0:');
+      lines.push('          print("Ne možemo dijeliti s nulom!")');
+      lines.push('      else:');
+      lines.push('          print(a / b)');
+      break;
+
+    case 'NameError':
+      lines.push(`❌  Greška: Nepoznato ime${varName}${lineInfo}`);
+      lines.push('');
+      lines.push('   Python ne prepoznaje ovo ime. Najčešći razlozi:');
+      lines.push('   • Greška u pisanju — Python razlikuje veliko i malo slovo');
+      lines.push('     (print ≠ Print ≠ PRINT, ime ≠ Ime)');
+      lines.push('   • Varijabla se koristi prije nego je kreirana');
+      lines.push('   • Tekst nije stavljen u navodnike: Sarajevo → "Sarajevo"');
+      break;
+
+    case 'SyntaxError':
+      lines.push(`❌  Greška: Pogrešno napisan kod${lineInfo}`);
+      lines.push('');
+      lines.push('   Python ne razumije ovu liniju. Provjeri:');
+      lines.push('   • Zagrade — svaka ( mora imati zatvarajuću )');
+      lines.push('   • Navodnici — svaki " mora biti zatvoren "');
+      lines.push('   • Dvotačka — if, elif, else, for moraju završiti s :');
+      lines.push('   • Poređenje — koristiti == a ne = unutar if uvjeta');
+      break;
+
+    case 'IndentationError':
+      lines.push(`❌  Greška: Pogrešno uvlačenje${lineInfo}`);
+      lines.push('');
+      lines.push('   Kod unutar if/elif/else bloka mora biti uvučen.');
+      lines.push('   Koristi tačno 4 razmaka ili jedan Tab:');
+      lines.push('');
+      lines.push('      if uvjet:          ← dvotačka na kraju');
+      lines.push('          print("OK")   ← 4 razmaka ispred!');
+      lines.push('      else:');
+      lines.push('          print("Ne")   ← 4 razmaka ispred!');
+      break;
+
+    case 'ValueError':
+      lines.push(`❌  Greška: Pogrešna vrijednost${lineInfo}`);
+      lines.push('');
+      lines.push('   Pokušavaš pretvoriti nešto što se ne može pretvoriti.');
+      lines.push('   • int("abc") → greška — "abc" nije broj');
+      lines.push('   • int("1.5") → greška — 1.5 nije cijeli broj, koristi float()');
+      lines.push('   • int("5")   → ispravno — "5" se može pretvoriti u broj 5');
+      lines.push('');
+      lines.push('   Provjeri šta korisnik unosi i kojom naredbom konvertiš.');
+      break;
+
+    case 'TypeError':
+      lines.push(`❌  Greška: Miješanje teksta i broja${lineInfo}`);
+      lines.push('');
+      lines.push('   Ne možeš direktno sabirati tekst i broj:');
+      lines.push('   • "10" + 20 → greška   (tekst + broj)');
+      lines.push('   • int("10") + 20 → 30  (broj + broj ✓)');
+      lines.push('');
+      lines.push('   input() uvijek vraća TEKST — čak i kad korisnik upiše broj!');
+      lines.push('   Rješenje: a = int(input("Broj: "))');
+      break;
+
+    default:
+      lines.push(`❌  Greška${lineInfo}`);
+      lines.push('');
+      // Prikaži zadnju liniju tracebacka — najkorisnija
+      const lastLine = raw.split('\n').filter(l => l.trim() && !l.includes('File "') && !l.includes('Traceback')).pop() || raw;
+      lines.push('   ' + lastLine.trim());
+  }
+
+  // Dodaj specifičan savjet za zadatak
+  if (taskSpecific) {
+    lines.push('');
+    lines.push('💡 Savjet za ovaj zadatak:');
+    lines.push('   ' + taskSpecific);
+  } else if (typeHint) {
+    lines.push('');
+    lines.push('💡 Savjet:');
+    lines.push('   ' + typeHint);
+  }
+
+  lines.push('');
+  lines.push('   Pritisni "💡 Pomoć" ako trebaš dodatnu uputu.');
+
+  return lines.join('\n');
+}
+
+// ═══════════════════════════════════════════════════════
+// RUN CODE
+// ═══════════════════════════════════════════════════════
+async function runCode() {
+  if (!pyReady) { appendOut('Python se još učitava...', 'out-error'); return; }
+
+  const code = document.getElementById('editor').value;
+  document.getElementById('output').innerHTML = '';
+
+  const btn = document.getElementById('run-btn');
+  btn.disabled = true;
+  btn.innerHTML = '<svg viewBox="0 0 16 16" fill="currentColor"><circle cx="8" cy="8" r="5"/></svg> Pokreće se...';
+
+  const t0 = performance.now();
+  let hasError = false;
+
+  try {
+    pyodide.globals.set('_js_input', async (prompt) => {
+      const val = await askInput(prompt);
+      appendOut(String(prompt) + String(val), 'out-input');
+      return String(val);
+    });
+    pyodide.globals.set('_js_print', (line) => appendOut(String(line), 'out-normal'));
+
+    // Korisnički kod piše input(...) bez await — automatski dodajemo await
+    const transformed = code.replace(/(?<!await\s)\binput\s*\(/g, 'await input(');
+    const indented = transformed.split('\n').map(l => '    ' + l).join('\n');
+    const asyncCode = `
+import builtins, sys
+
+class _Out:
+    def __init__(self): self.buf = ""
+    def write(self, s):
+        self.buf += s
+        while "\\n" in self.buf:
+            line, self.buf = self.buf.split("\\n", 1)
+            _js_print(line)
+    def flush(self): pass
+
+sys.stdout = _Out()
+sys.stderr = sys.stdout
+
+async def _ainput(prompt=""):
+    return await _js_input(str(prompt))
+builtins.input = _ainput
+
+async def _main():
+${indented}
+
+await _main()
+`;
+    await pyodide.runPythonAsync(asyncCode);
+
+    const elapsed = ((performance.now()-t0)/1000).toFixed(2);
+    document.getElementById('run-time').textContent = `${elapsed}s`;
+    recordAttempt(curKey(), false);
+    buildSidebar();
+    showToast('✅ Uspješno pokrenuto!');
+
+    // Auto-next after solve — gentle nudge after 2s
+    const tp = progress.tasks[curKey()];
+    if (tp && tp.attempts === 1 && tp.solved) {
+      setTimeout(() => showToast('🎉 Zadatak riješen! Pređi na sljedeći →'), 2200);
+    }
+
+  } catch(err) {
+    hasError = true;
+    const raw = String(err.message || err);
+    appendOut(friendlyError(raw, curTaskData()), 'out-error');
+    recordAttempt(curKey(), true);
+    buildSidebar();
+  }
+
+  btn.disabled = false;
+  btn.innerHTML = '<svg viewBox="0 0 16 16" fill="currentColor"><path d="M3 2l10 6-10 6z"/></svg> Pokreni (Ctrl+Enter)';
+}
+
+// ═══════════════════════════════════════════════════════
+// STATISTIKA MODAL
+// ═══════════════════════════════════════════════════════
+document.getElementById('stats-btn').addEventListener('click', showStats);
+document.getElementById('stats-close').addEventListener('click', () => document.getElementById('stats-modal').classList.remove('show'));
+document.getElementById('stats-x').addEventListener('click', () => document.getElementById('stats-modal').classList.remove('show'));
+document.getElementById('stats-reset').addEventListener('click', async () => {
+  if (!confirm(`Resetuj napredak za "${allProgress.currentProfile}"? Ovo se ne može poništiti.`)) return;
+  const name = allProgress.currentProfile;
+  allProgress.profiles[name] = defaultProfile();
+  progress = allProgress.profiles[name];
+  progress.sessionStart = Date.now();
+  curG = 0; curT = 0;
+  await saveProgress();
+  document.getElementById('stats-modal').classList.remove('show');
+  buildSidebar(); loadTask();
+  showToast('🗑 Napredak resetovan.');
+});
+
+document.getElementById('stats-check-update').addEventListener('click', async () => {
+  document.getElementById('stats-modal').classList.remove('show');
+  if (window._checkUpdate) await window._checkUpdate();
+  else showToast('Update provjera dostupna je samo u desktop verziji.');
+});
+
+function showStats() {
+  const all = allTasks();
+  const solved  = all.filter(t => (progress.tasks[`${t.gi}-${t.ti}`]||{}).solved).length;
+  const tried   = all.filter(t => { const p=progress.tasks[`${t.gi}-${t.ti}`]; return p&&p.attempts>0; }).length;
+  const errors  = Object.values(progress.tasks).reduce((s,t) => s+(t.errors||0), 0);
+  const hints   = Object.values(progress.tasks).reduce((s,t) => s+(t.hintsUsed||0), 0);
+  const elapsed = Math.round(progress.totalTimeSeconds + (Date.now()-(progress.sessionStart||Date.now()))/1000);
+  const mins    = Math.floor(elapsed/60), secs = elapsed%60;
+
+  document.getElementById('stats-sub').textContent =
+    `Učenik/ca: ${allProgress.currentProfile || '—'} · Zadnji put: ${progress.lastSeen ? new Date(progress.lastSeen).toLocaleDateString('bs') : '—'}`;
+
+  document.getElementById('stats-grid').innerHTML = `
+    <div class="stat-box"><div class="stat-num green">${solved}</div><div class="stat-label">Riješeno</div></div>
+    <div class="stat-box"><div class="stat-num">${tried}</div><div class="stat-label">Pokušano</div></div>
+    <div class="stat-box"><div class="stat-num orange">${errors}</div><div class="stat-label">Grešaka</div></div>
+    <div class="stat-box"><div class="stat-num">${hints}</div><div class="stat-label">Pomoći</div></div>
+    <div class="stat-box"><div class="stat-num">${Math.round(solved/all.length*100)}%</div><div class="stat-label">Završeno</div></div>
+    <div class="stat-box"><div class="stat-num" style="font-size:1.2rem">${mins}m ${secs}s</div><div class="stat-label">Ukupno</div></div>
+  `;
+
+  const tbody = document.getElementById('stats-body');
+  tbody.innerHTML = '';
+  all.forEach(t => {
+    const tp = progress.tasks[`${t.gi}-${t.ti}`];
+    const tr = document.createElement('tr');
+    const status = tp?.solved ? `<span class="badge-solved">Riješeno</span>`
+                 : tp?.attempts > 0 ? `<span class="badge-tried">U toku</span>`
+                 : `<span class="badge-new">Nije početo</span>`;
+    tr.innerHTML = `
+      <td>${t.title}</td>
+      <td>${status}</td>
+      <td>${tp?.attempts || 0}</td>
+      <td>${tp?.errors || 0}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+
+  document.getElementById('stats-modal').classList.add('show');
+}
+
+// ═══════════════════════════════════════════════════════
+// TOP LISTA (LEADERBOARD)
+// ═══════════════════════════════════════════════════════
+document.getElementById('leaderboard-btn').addEventListener('click', showLeaderboard);
+document.getElementById('leaderboard-close').addEventListener('click', () => document.getElementById('leaderboard-modal').classList.remove('show'));
+document.getElementById('leaderboard-x').addEventListener('click', () => document.getElementById('leaderboard-modal').classList.remove('show'));
+
+function showLeaderboard() {
+  recalcPoints(progress);
+  const list = listProfiles().sort((a,b) => b.points - a.points);
+  const medals = ['🥇','🥈','🥉'];
+  const box = document.getElementById('leaderboard-list');
+  box.innerHTML = '';
+
+  if (list.length === 0) {
+    box.innerHTML = `<div style="text-align:center;color:var(--muted);padding:20px">Još nema profila.</div>`;
+  }
+
+  list.forEach((p, i) => {
+    const row = document.createElement('div');
+    row.className = 'lb-row' + (p.name === allProgress.currentProfile ? ' you' : '');
+    const rankClass = i===0?'gold':i===1?'silver':i===2?'bronze':'';
+    row.innerHTML = `
+      <div class="lb-rank ${rankClass}">${medals[i] || (i+1)}</div>
+      <div class="avatar">${p.name.charAt(0).toUpperCase()}</div>
+      <div class="lb-info">
+        <div class="lb-name">${p.name}${p.name===allProgress.currentProfile?' (ti)':''}</div>
+        <div class="lb-sub">${p.solved} / ${p.total} zadataka riješeno</div>
+      </div>
+      <div class="lb-pts">⭐ ${p.points}</div>
+    `;
+    box.appendChild(row);
+  });
+
+  document.getElementById('leaderboard-modal').classList.add('show');
+}
+
+// ═══════════════════════════════════════════════════════
+// PROFILI / ONBOARDING
+// ═══════════════════════════════════════════════════════
+function checkOnboarding() {
+  if (!allProgress.currentProfile) openProfileSwitcher(false);
+}
+
+function openProfileSwitcher(cancelable) {
+  const names = Object.keys(allProgress.profiles);
+  const title = document.getElementById('profiles-title');
+  const sub   = document.getElementById('profiles-sub');
+  const list  = document.getElementById('profiles-list');
+  const cancel = document.getElementById('profiles-cancel');
+  const input = document.getElementById('name-input');
+
+  if (names.length === 0) {
+    title.textContent = 'Dobrodošao/la!';
+    sub.innerHTML = 'Ovo je tvoja osobna Python Učilica.<br>Upiši svoje ime da počnemo — napredak će se automatski snimati.';
+    list.innerHTML = '';
+    input.placeholder = 'Tvoje ime...';
+  } else {
+    title.textContent = 'Ko uči? 👋';
+    sub.textContent = 'Izaberi svoj profil ili napravi novi.';
+    list.innerHTML = '';
+    listProfiles().sort((a,b)=>b.points-a.points).forEach(p => {
+      const row = document.createElement('button');
+      row.className = 'profile-row';
+      row.innerHTML = `
+        <div class="avatar">${p.name.charAt(0).toUpperCase()}</div>
+        <div class="pinfo">
+          <div class="pname">${p.name}</div>
+          <div class="pmeta">${p.solved} / ${p.total} riješeno</div>
+        </div>
+        <div class="ppts">⭐ ${p.points}</div>
+      `;
+      row.addEventListener('click', () => {
+        switchProfile(p.name);
+        document.getElementById('onboarding').classList.remove('show');
+        updateHeader();
+      });
+      list.appendChild(row);
+    });
+    input.placeholder = 'Ili upiši ime za novi profil...';
+  }
+
+  cancel.style.display = cancelable ? 'block' : 'none';
+  input.value = '';
+  document.getElementById('onboarding').classList.add('show');
+  setTimeout(() => input.focus(), 50);
+}
+
+document.getElementById('name-ok').addEventListener('click', finishOnboarding);
+document.getElementById('name-input').addEventListener('keydown', e => { if(e.key==='Enter') finishOnboarding(); });
+document.getElementById('profiles-cancel').addEventListener('click', () => {
+  document.getElementById('onboarding').classList.remove('show');
+});
+document.getElementById('profile-chip').addEventListener('click', () => {
+  openProfileSwitcher(true);
+});
+
+function finishOnboarding() {
+  const name = document.getElementById('name-input').value.trim();
+  if (!name) return;
+  if (allProgress.profiles[name]) {
+    switchProfile(name);
+  } else {
+    createProfile(name);
+  }
+  document.getElementById('onboarding').classList.remove('show');
+  updateHeader();
+}
+
+// ═══════════════════════════════════════════════════════
+// TOAST
+// ═══════════════════════════════════════════════════════
+let toastTimer = null;
+function showToast(msg, error=false) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast' + (error?' error':'') + ' show';
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+// ═══════════════════════════════════════════════════════
+// KEYBOARD
+// ═══════════════════════════════════════════════════════
+document.getElementById('editor').addEventListener('keydown', e => {
+  if ((e.ctrlKey||e.metaKey) && e.key==='Enter') { e.preventDefault(); runCode(); }
+  if (e.key==='Tab') {
+    e.preventDefault();
+    const t=e.target, s=t.selectionStart, en=t.selectionEnd;
+    t.value = t.value.substring(0,s)+'    '+t.value.substring(en);
+    t.selectionStart = t.selectionEnd = s+4;
+  }
+});
+document.getElementById('run-btn').addEventListener('click', runCode);
+
+// ═══════════════════════════════════════════════════════
+// LOAD PYODIDE
+// ═══════════════════════════════════════════════════════
+async function initPyodide() {
+  const bar = document.getElementById('load-bar');
+  const sub = document.getElementById('load-sub');
+  bar.style.width = '15%';
+  sub.textContent = 'Učitavam Pyodide skriptu...';
+
+  await new Promise((resolve, reject) => {
+    const s = document.createElement('script');
+    s.src = 'pyodide/pyodide.js';
+    s.onload = resolve; s.onerror = reject;
+    document.head.appendChild(s);
+  });
+  bar.style.width = '50%';
+  sub.textContent = 'Inicijaliziram Python...';
+
+  pyodide = await loadPyodide({
+    indexURL: 'pyodide/',
+    stdout: () => {}, stderr: () => {}
+  });
+  bar.style.width = '100%';
+
+  pyReady = true;
+  document.getElementById('status-dot').className = 'status-dot ready';
+  document.getElementById('status-txt').textContent = 'Python spreman ✓';
+  document.getElementById('run-btn').disabled = false;
+
+  setTimeout(() => {
+    document.getElementById('loading').classList.add('hide');
+    setTimeout(() => document.getElementById('loading').remove(), 600);
+  }, 300);
+}
+
+// ═══════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════
+// AI ASISTENT (rule-based, radi 100% offline)
+// ═══════════════════════════════════════════════════════
+const AI_KB = [
+  { keys:['print','ispis','ispisa','štampa','stampa'],
+    a:"<code>print()</code> ispisuje tekst ili broj na ekran.\n\nTekst ide u navodnike: <code>print(\"Zdravo!\")</code>\nBroj ide bez navodnika: <code>print(42)</code>\n\nViše stvari odjednom razdvoji zarezom: <code>print(\"Imam\", 14, \"godina\")</code> — Python sam dodaje razmake." },
+
+  { keys:['varijabl','spremi','sačuva','sacuva','dodjel'],
+    a:"Varijabla je 'kutija' u memoriji s imenom u kojoj čuvamo podatak.\n\n<code>duzina = 8</code>\n\nZnak <code>=</code> ovdje znači DODJELA ('neka duzina bude 8'), ne matematičko jednako.\n\nKasnije koristiš ime varijable: <code>print(duzina)</code> ili <code>povrsina = duzina * sirina</code>." },
+
+  { keys:['input','unos','unosi','korisnik upis'],
+    a:"<code>input()</code> traži unos od korisnika i čeka Enter.\n\n<code>ime = input(\"Tvoje ime: \")</code>\n\n⚠️ VAŽNO: input() UVIJEK vraća TEKST, čak i ako korisnik upiše broj!\n\nZa cijeli broj: <code>int(input(\"Broj: \"))</code>\nZa decimalni broj: <code>float(input(\"Broj: \"))</code>" },
+
+  { keys:['if','elif','else','uvjet','odluk','grana'],
+    a:"<code>if</code> provjerava uvjet i izvršava kod ako je tačan.\n\n<code>if x > 0:\n    print(\"Pozitivan\")\nelse:\n    print(\"Nije pozitivan\")</code>\n\n• Iza if/elif/else MORA biti dvotačka <code>:</code>\n• Kod unutar MORA biti uvučen 4 razmaka\n• <code>elif</code> dodaje još jednu opciju, <code>else</code> hvata sve ostalo" },
+
+  { keys:['dodjela','poredjenje','jednako','razlika izmedju','razlika između'],
+    a:"<code>=</code> i <code>==</code> nisu isto!\n\n<code>=</code> — DODJELA: \"daj varijabli ovu vrijednost\"\n<code>x = 5</code>\n\n<code>==</code> — POREĐENJE: \"jesu li jednaki?\"\n<code>if x == 5:</code>\n\nU if uvjetu UVIJEK koristi <code>==</code>." },
+
+  { keys:['and','or','not','logick'],
+    a:"Logički operatori spajaju uvjete:\n\n<code>and</code> — OBA uvjeta moraju biti tačna\n<code>if x > 0 and x < 10:</code>\n\n<code>or</code> — BAR JEDAN uvjet mora biti tačan\n<code>if x < 0 or x > 100:</code>\n\n<code>not</code> — suprotno (negacija)" },
+
+  { keys:['zerodivisionerror','zerodivision','dijeljen','djelje','nulom','deljenje s nulom'],
+    a:"<code>ZeroDivisionError</code> — pokušao/la si podijeliti broj s 0!\n\n<code>10 / 0</code>  →  greška! (rezultat bi bio beskonačnost)\n\nRješenje — provjeri PRIJE dijeljenja:\n<code>if b == 0:\n    print(\"Ne može!\")\nelse:\n    print(a / b)</code>" },
+
+  { keys:['nameerror','nije definis','name'],
+    a:"<code>NameError</code> — koristiš varijablu koja ne postoji (ili nije kreirana PRIJE ove linije).\n\nNajčešći uzroci:\n• Pravopis: <code>ime</code> ≠ <code>Ime</code> (velika/mala slova!)\n• Varijabla kreirana ISPOD linije gdje se koristi\n• Tekst zaboravljen u navodnicima: <code>grad = Sarajevo</code> umjesto <code>grad = \"Sarajevo\"</code>" },
+
+  { keys:['syntaxerror','sintaks'],
+    a:"<code>SyntaxError</code> — greška u 'gramatici' koda. Provjeri:\n\n• Jesu li sve zagrade <code>( )</code> zatvorene?\n• Ima li dvotačka <code>:</code> iza if/elif/else?\n• Jesu li navodnici <code>\" \"</code> zatvoreni?\n• Nisi koristio/la <code>=</code> umjesto <code>==</code> u uvjetu?" },
+
+  { keys:['indentationerror','uvlač','uvlac','indent'],
+    a:"<code>IndentationError</code> — kod unutar if/else/petlje mora biti UVUČEN.\n\n<code>if x > 0:\n    print(\"Da\")</code>\n\nTačno 4 razmaka (ili Tab) ispred. Python tako zna koji kod 'pripada' if-u. Budi dosledan — ne miješaj 4 i 5 razmaka!" },
+
+  { keys:['typeerror','tip','sabira tekst'],
+    a:"<code>TypeError</code> — miješaš tekst i broj koji se ne mogu direktno spojiti.\n\n<code>print(\"Imaš \" + 5 + \" bodova\")</code> → greška!\n\nRješenja:\n• Koristi zarez: <code>print(\"Imaš\", 5, \"bodova\")</code>\n• Ili pretvori broj u tekst: <code>str(5)</code>" },
+
+  { keys:['valueerror'],
+    a:"<code>ValueError</code> — najčešće kad <code>int()</code> ne može pretvoriti tekst u cijeli broj.\n\n<code>int(\"1.75\")</code> → greška! (1.75 nije cijeli broj)\n\nZa decimalne brojeve koristi <code>float()</code> umjesto <code>int()</code>." },
+
+  { keys:['pomoć','pomoc','zapeo','zapela','ne razumijem','ne znam','ne radi'],
+    a: null /* handled specially */ },
+
+  { keys:['rješenje','rjesenje','rješi','rijesi','tačan odgovor','tacan odgovor'],
+    a: "Rješenje za trenutni zadatak možeš pogledati klikom na zeleno dugme <code>✅ Rješenje</code> u alatnoj traci ispod editora. Pokušaj prvo sam/a — i greške su dio učenja! 💪" },
+
+  { keys:['bodovi','poeni','bod','top lista','rang'],
+    a: "Bodove dobijaš za RIJEŠENE zadatke:\n• Tip A (Dopuni): 10 bodova\n• Tip B (Ispravi): 15 bodova\n• Tip C (Napiši): 20 bodova\n\nSvaka korištena pomoć -2, gledano rješenje -5, dodatne greške -1. Top listu pogledaš preko 🏆 dugmeta u zaglavlju." },
+
+  { keys:['zdravo','pozdrav','hej','bok','ćao','cao'],
+    a:"Zdravo! 👋 Ja sam tvoj AI asistent za Python. Mogu ti objasniti print, varijable, input, if/elif/else, ili pomoći s greškama (NameError, SyntaxError, ZeroDivisionError...). Šta te zanima?" },
+
+  { keys:['hvala','super','odlično','odlicno'],
+    a:"Nema problema! 😊 Sretno dalje s programiranjem — slobodno me pitaj kad zapneš." },
+];
+
+const AI_SUGGESTIONS = [
+  "Šta je print()?", "Razlika = i ==?", "ZeroDivisionError?", "Šta je NameError?", "Kako radi if/else?", "Pomoć s ovim zadatkom"
+];
+
+function initAssistant() {
+  const fab = document.getElementById('ai-fab');
+  const panel = document.getElementById('ai-panel');
+  const dot = document.getElementById('ai-dot');
+
+  fab.addEventListener('click', () => {
+    panel.classList.toggle('show');
+    dot.classList.remove('show');
+    if (panel.classList.contains('show') && document.getElementById('ai-messages').children.length === 0) {
+      addAIMsg("Zdravo! 🤖 Ja sam tvoj AI asistent — radim potpuno offline, bez interneta.\n\nMogu ti objasniti: print, varijable, input, if/elif/else, i česte greške (NameError, ZeroDivisionError, SyntaxError...).\n\nPitaj me ili klikni na neki od prijedloga ispod! 👇", true);
+    }
+  });
+  document.getElementById('ai-close').addEventListener('click', () => panel.classList.remove('show'));
+
+  // Suggestions
+  const sugWrap = document.getElementById('ai-suggestions');
+  AI_SUGGESTIONS.forEach(s => {
+    const chip = document.createElement('div');
+    chip.className = 'ai-chip';
+    chip.textContent = s;
+    chip.addEventListener('click', () => { sendAIQuestion(s); });
+    sugWrap.appendChild(chip);
+  });
+
+  document.getElementById('ai-send').addEventListener('click', () => {
+    const val = document.getElementById('ai-input').value.trim();
+    if (val) sendAIQuestion(val);
+  });
+  document.getElementById('ai-input').addEventListener('keydown', e => {
+    if (e.key === 'Enter') {
+      const val = e.target.value.trim();
+      if (val) sendAIQuestion(val);
+    }
+  });
+
+  // Proaktivni hint — ako učenik ima 3+ grešaka na trenutnom zadatku, pokaži tačku
+  setInterval(() => {
+    if (!progress) return;
+    const tp = progress.tasks[curKey()];
+    if (tp && tp.errors >= 2 && !tp.solved && !panel.classList.contains('show')) {
+      dot.classList.add('show');
+    }
+  }, 3000);
+}
+
+function addAIMsg(text, isBot) {
+  const box = document.getElementById('ai-messages');
+  const d = document.createElement('div');
+  d.className = 'ai-msg ' + (isBot ? 'bot' : 'user');
+  d.innerHTML = text;
+  box.appendChild(d);
+  box.scrollTop = box.scrollHeight;
+}
+
+function sendAIQuestion(text) {
+  addAIMsg(text, false);
+  document.getElementById('ai-input').value = '';
+  setTimeout(() => {
+    const reply = answerAI(text);
+    addAIMsg(reply, true);
+  }, 350);
+}
+
+function answerAI(text) {
+  const q = text.toLowerCase()
+    .replace(/č/g,'c').replace(/ć/g,'c').replace(/š/g,'s').replace(/đ/g,'dj').replace(/ž/g,'z');
+
+  // Posebno: pomoć s trenutnim zadatkom
+  if (/(pomoc|zapeo|zapela|ne razumijem|ne znam|ne radi|zadatk)/.test(q)) {
+    const task = curTaskData();
+    let msg = `Trenutni zadatak: <strong>${task.title}</strong>\n\n${task.desc.replace(/<[^>]+>/g,'')}`;
+    if (task.hint) msg += `\n\n💡 Pomoć: ${task.hint}`;
+    msg += `\n\nAko i dalje ne ide, klikni 💡 Pomoć ili ✅ Rješenje ispod editora.`;
+    return msg;
+  }
+
+  // Pretraga kroz knowledge base
+  for (const entry of AI_KB) {
+    if (entry.a === null) continue;
+    for (const key of entry.keys) {
+      const k = key.toLowerCase().replace(/č/g,'c').replace(/ć/g,'c').replace(/š/g,'s').replace(/đ/g,'dj').replace(/ž/g,'z');
+      // Kratke riječi (and, or, not, if...) traže granicu riječi da ne pogode "errOR" itd.
+      if (k.length <= 3) {
+        if (new RegExp('\\b' + k + '\\b').test(q)) return entry.a;
+      } else if (q.includes(k)) {
+        return entry.a;
+      }
+    }
+  }
+
+  return "Hmm, nisam siguran/na za to. 🤔 Mogu pomoći sa: <code>print</code>, <code>varijable</code>, <code>input</code>, <code>if/elif/else</code>, ili greškama poput <code>NameError</code>, <code>ZeroDivisionError</code>, <code>SyntaxError</code>.\n\nMožeš i kliknuti '💡 Pomoć s ovim zadatkom' za kontekstualnu pomoć.";
+}
+
+// ═══════════════════════════════════════════════════════
+// FILE:// DETEKCIJA
+// ═══════════════════════════════════════════════════════
+function checkFileProtocol() {
+  if (window.location.protocol === 'file:' && !isElectron) {
+    document.getElementById('loading').classList.add('hide');
+    document.getElementById('file-warning').classList.add('show');
+    return true;
+  }
+  return false;
+}
+
+
+// ═══════════════════════════════════════════════════════
+// AUTO-UPDATE
+// ═══════════════════════════════════════════════════════
+function initUpdater() {
+  if (!isElectron) return;
+
+  const banner     = document.getElementById('update-banner');
+  const bannerTxt  = document.getElementById('update-banner-txt');
+  const dlBtn      = document.getElementById('update-download-btn');
+  const relBtn     = document.getElementById('update-releases-btn');
+  const dismissBtn = document.getElementById('update-dismiss');
+  const modal      = document.getElementById('update-modal');
+  const mTitle     = document.getElementById('update-modal-title');
+  const mDesc      = document.getElementById('update-modal-desc');
+  const pBar       = document.getElementById('update-progress-bar');
+  const pFill      = document.getElementById('update-progress-fill');
+  const pTxt       = document.getElementById('update-progress-txt');
+  const installBtn = document.getElementById('update-install-btn');
+  const closeBtn   = document.getElementById('update-modal-close');
+
+  // ── Update dostupan ──
+  window.electronAPI.onUpdateAvailable(info => {
+    bannerTxt.innerHTML = `🔄 Nova verzija <strong>v${info.version}</strong> je dostupna!`;
+    banner.classList.add('show');
+  });
+
+  window.electronAPI.onUpdateNotAvailable(() => {
+    // Tihо — ne ometamo korisnika
+    console.log('[update] Nema novih verzija.');
+  });
+
+  // ── Preuzimanje ──
+  window.electronAPI.onUpdateProgress(p => {
+    pBar.classList.add('show');
+    pTxt.classList.add('show');
+    pFill.style.width = p.percent + '%';
+    pTxt.textContent = `${p.percent}%  —  ${p.transferred} MB / ${p.total} MB  (${p.bytesPerSecond} KB/s)`;
+  });
+
+  // ── Preuzeto ──
+  window.electronAPI.onUpdateDownloaded(info => {
+    mTitle.textContent = `✅ Update v${info.version} je spreman!`;
+    mDesc.textContent  = 'Klikni "Instaliraj i restartuj" da se primijeni update. Napredak je snimljen.';
+    installBtn.style.display = 'block';
+    pBar.classList.remove('show');
+    pTxt.classList.remove('show');
+    banner.classList.remove('show');
+    modal.classList.add('show');
+  });
+
+  // ── Greška ──
+  window.electronAPI.onUpdateError(err => {
+    banner.classList.remove('show');
+    // Tiho ignorišemo greške dok nije konfigurisan GitHub repo
+    // (npr. ENOTFOUND, 404, net::ERR_NAME_NOT_RESOLVED)
+    const isNetworkOrConfig = err.message && (
+      err.message.includes('ENOTFOUND') ||
+      err.message.includes('ECONNREFUSED') ||
+      err.message.includes('404') ||
+      err.message.includes('net::') ||
+      err.message.includes('GITHUB_USERNAME') ||
+      err.message.includes('getaddrinfo')
+    );
+    if (!isNetworkOrConfig) {
+      // Prava greška (download pao usred procesa) — prikaži
+      showToast('⚠ Preuzimanje updatea nije uspjelo.', true);
+    }
+    // Mrežne i config greške — tiho ignorišemo
+    console.log('[update] Greška (ignorisana):', err.message);
+  });
+
+  // ── Dugmad ──
+  dlBtn.addEventListener('click', async () => {
+    banner.classList.remove('show');
+    mTitle.textContent = '⬇ Preuzimanje updatea...';
+    mDesc.textContent  = 'Sačekaj dok se nova verzija preuzme. Možeš nastaviti vježbati.';
+    installBtn.style.display = 'none';
+    pFill.style.width = '0%';
+    pBar.classList.add('show');
+    pTxt.classList.add('show');
+    modal.classList.add('show');
+    await window.electronAPI.downloadUpdate();
+  });
+
+  relBtn.addEventListener('click', () => window.electronAPI.openReleases());
+  dismissBtn.addEventListener('click', () => banner.classList.remove('show'));
+  installBtn.addEventListener('click', () => window.electronAPI.installUpdate());
+  closeBtn.addEventListener('click', () => modal.classList.remove('show'));
+
+  // Expose za manual check (npr. iz statistika modala)
+  window._checkUpdate = async () => {
+    const r = await window.electronAPI.checkForUpdate();
+    if (r.status === 'error') showToast('⚠ Provjera updatea nije uspjela.', true);
+    if (r.status === 'unavailable') showToast('Update nije dostupan u dev modu.');
+  };
+}
+
+async function init() {
+  if (checkFileProtocol()) return;
+
+  await loadProgress();
+
+  // Electron version
+  if (isElectron) {
+    const ver = await window.electronAPI.getVersion();
+    document.getElementById('ver').textContent = `v${ver}`;
+  }
+
+  if (progress) { buildSidebar(); loadTask(); updateHeader(); }
+  checkOnboarding();
+  initPyodide();
+  initAssistant();
+  initUpdater();
+
+  // Expose session time saver za main.js close handler
+  window._saveSessionTime = () => {
+    if (!allProgress) return;
+    const p = allProgress.profiles[allProgress.currentProfile];
+    if (p) {
+      p.totalTimeSeconds += Math.round((Date.now() - (p.sessionStart || Date.now())) / 1000);
+      p.sessionStart = null;
+    }
+    saveProgress();
+  };
+
+  // Auto-save on unload
+  window.addEventListener('beforeunload', () => {
+    if (!progress) return;
+    progress.totalTimeSeconds += Math.round((Date.now()-(progress.sessionStart||Date.now()))/1000);
+    progress.sessionStart = null;
+    saveProgress();
+  });
+}
+
+// Escape zatvara otvorene modale
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    document.querySelectorAll('.stats-wrap.show').forEach(m => m.classList.remove('show'));
+  }
+});
+
+init();
+</script>
+</body>
+</html>
