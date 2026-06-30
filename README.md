@@ -14,7 +14,7 @@ Idi na [**Releases**](../../releases/latest) i preuzmi:
 | Platforma | Fajl |
 |-----------|------|
 | 🐧 Linux (sve distribucije) | `Python-Ucilica-x.x.x-x64.AppImage` |
-| 🪟 Windows | `PythonUcilica-Setup.exe` |
+| 🪟 Windows | `Python.Ucilica.1.0.0.exe` |
 
 ### Linux — pokretanje AppImage
 ```bash
